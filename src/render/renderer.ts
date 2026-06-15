@@ -6,6 +6,7 @@
 import { type GameState, MAP_W, MAP_H, tx, ty } from '../engine/state';
 import { TILE } from '../engine/tiles';
 import { type Atlas, type Chrome, srcOf, overlaySrcOf, TILE_PX } from './atlas';
+import type { Ui } from '../ui/desktop';
 
 // --- layout (logical pixels) ---
 export const VIEW = 9;
@@ -37,6 +38,8 @@ const C_LIGHT = '#ffffff';
 const C_SHADOW = '#808080';
 const C_DARK = '#000000';
 const C_TITLE = '#000080';
+const C_GRAY_TEXT = '#808080';
+const MENU_FONT = '11px Tahoma, "MS Sans Serif", sans-serif';
 
 // LCD digit strip metrics (digits.png is 17x552). 24 cells, 23px pitch, 21px tall;
 // cells 0-11 = yellow set, 12-23 = green set. Within a set: offset 0=dash, 1=dim ghost,
@@ -82,16 +85,19 @@ export class Renderer {
     this.canvas.style.height = `${LOGICAL_H * scale}px`;
   }
 
-  draw(state: GameState): void {
-    this.drawWindowFrame(state);
+  draw(state: GameState, ui: Ui): void {
+    this.drawWindowFrame(state, ui);
     this.drawClient(state);
-    this.drawViewport(state);
+    if (ui.isPausedView()) this.drawPausedViewport();
+    else this.drawViewport(state, ui);
     this.drawPanel(state);
+    if (ui.openMenu !== null) this.drawDropdown(ui);
+    if (ui.dialog) this.drawDialog(ui);
   }
 
   // --- window chrome ---
 
-  private drawWindowFrame(state: GameState): void {
+  private drawWindowFrame(state: GameState, ui: Ui): void {
     const ctx = this.ctx;
     // Outer raised bevel + face.
     ctx.fillStyle = C_FACE;
@@ -127,12 +133,36 @@ export class Renderer {
     const my = BORDER + TITLE_H;
     ctx.fillStyle = C_FACE;
     ctx.fillRect(BORDER, my, LOGICAL_W - 2 * BORDER, MENU_H);
-    ctx.fillStyle = C_DARK;
-    ctx.font = '11px Tahoma, "MS Sans Serif", sans-serif';
-    let mx = BORDER + 8;
-    for (const item of ['Game', 'Options', 'Level', 'Help']) {
-      ctx.fillText(item, mx, my + MENU_H / 2 + 1);
-      mx += ctx.measureText(item).width + 16;
+    ctx.font = MENU_FONT;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    const menus = ui.menus();
+    ui.barRects = [];
+    let mx = BORDER + 6;
+    menus.forEach((m, i) => {
+      const w = ctx.measureText(m.label).width + 12;
+      const r = { x: mx, y: my, w, h: MENU_H };
+      ui.barRects.push(r);
+      if (ui.openMenu === i) {
+        ctx.fillStyle = C_TITLE;
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = '#fff';
+      } else {
+        ctx.fillStyle = C_DARK;
+      }
+      this.menuText(m.label, mx + 6, my + MENU_H / 2 + 1, m.accel);
+      mx += w;
+    });
+  }
+
+  /** Draw a menu label with the accelerator character underlined. */
+  private menuText(label: string, x: number, y: number, accel: number | undefined): void {
+    const ctx = this.ctx;
+    ctx.fillText(label, x, y);
+    if (accel !== undefined && accel >= 0 && accel < label.length) {
+      const pre = ctx.measureText(label.slice(0, accel)).width;
+      const cw = ctx.measureText(label[accel]!).width;
+      ctx.fillRect(x + pre, y + 6, cw, 1);
     }
   }
 
@@ -152,7 +182,7 @@ export class Renderer {
     void state;
   }
 
-  private drawViewport(state: GameState): void {
+  private drawViewport(state: GameState, ui: Ui): void {
     const ctx = this.ctx;
     // Sunken gray frame around the viewport.
     ctx.fillStyle = C_FACE;
@@ -196,8 +226,41 @@ export class Renderer {
       wrapText(ctx, state.level.hint, VPX + 6, VPY + VIEW_PX - 40, VIEW_PX - 12, 13);
     }
 
-    if (state.status === 'won') this.banner('LEVEL COMPLETE');
-    else if (state.status === 'lost') this.banner(state.deathCause || 'OOPS!');
+    // Level-start popup: "LESSON 1 / Password: BDHP" (yellow on black).
+    if (ui.levelStart) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 20px Tahoma, sans-serif';
+      const w1 = ctx.measureText(ui.levelStart.title).width;
+      ctx.font = '13px Tahoma, sans-serif';
+      const w2 = ctx.measureText(`Password: ${ui.levelStart.password}`).width;
+      const bw = Math.max(w1, w2) + 28;
+      const bx = VPX + VIEW_PX / 2 - bw / 2, by2 = VPY + VIEW_PX - 78, bh = 56;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(bx, by2, bw, bh);
+      ctx.fillStyle = '#ffe000';
+      ctx.font = 'bold 20px Tahoma, sans-serif';
+      ctx.fillText(ui.levelStart.title, VPX + VIEW_PX / 2, by2 + 19);
+      ctx.font = '13px Tahoma, sans-serif';
+      ctx.fillText(`Password: ${ui.levelStart.password}`, VPX + VIEW_PX / 2, by2 + 39);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  private drawPausedViewport(): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = C_FACE;
+    ctx.fillRect(FRAME_X, FRAME_Y, VIEW_PX + 2 * FRAME, VIEW_PX + 2 * FRAME);
+    bevel(ctx, FRAME_X, FRAME_Y, VIEW_PX + 2 * FRAME, VIEW_PX + 2 * FRAME, false, 2);
+    bevel(ctx, VPX - 2, VPY - 2, VIEW_PX + 4, VIEW_PX + 4, false, 2);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(VPX, VPY, VIEW_PX, VIEW_PX);
+    ctx.fillStyle = '#ff0000';
+    ctx.font = 'bold 36px Tahoma, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PAUSED', VPX + VIEW_PX / 2, VPY + VIEW_PX / 2);
+    ctx.textAlign = 'left';
   }
 
   // --- info panel ---
@@ -258,16 +321,134 @@ export class Renderer {
     this.ctx.drawImage(this.atlas.image, sx, sy, TILE_PX, TILE_PX, dx, dy, TILE_PX, TILE_PX);
   }
 
-  private banner(text: string): void {
+  // --- menus & dialogs ---
+
+  private drawDropdown(ui: Ui): void {
     const ctx = this.ctx;
-    ctx.fillStyle = 'rgba(0,0,0,0.72)';
-    ctx.fillRect(VPX, VPY + VIEW_PX / 2 - 20, VIEW_PX, 40);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 16px Tahoma, sans-serif';
-    ctx.textAlign = 'center';
+    const mi = ui.openMenu!;
+    const bar = ui.barRects[mi]!;
+    const items = ui.menus()[mi]!.items;
+    ctx.font = MENU_FONT;
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, VPX + VIEW_PX / 2, VPY + VIEW_PX / 2);
     ctx.textAlign = 'left';
+
+    // width = widest label (+ check gutter) + widest shortcut + padding
+    let labelW = 0, shortW = 0;
+    for (const it of items) {
+      if (it.separator) continue;
+      labelW = Math.max(labelW, ctx.measureText(it.label!).width);
+      if (it.shortcut) shortW = Math.max(shortW, ctx.measureText(it.shortcut).width);
+    }
+    const padL = 20, gap = 24, padR = 12;
+    const w = padL + labelW + gap + shortW + padR;
+    const rowH = 16;
+    let y = bar.y + bar.h;
+    const x = bar.x;
+    let h = 0;
+    for (const it of items) h += it.separator ? 6 : rowH;
+
+    // shadow + box
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(x + 2, y + 2, w, h + 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = C_DARK;
+    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+
+    ui.dropItemRects = [];
+    items.forEach((it, i) => {
+      if (it.separator) {
+        ui.dropItemRects.push({ x, y, w, h: 6 });
+        ctx.strokeStyle = C_SHADOW;
+        ctx.beginPath(); ctx.moveTo(x + 3, y + 3.5); ctx.lineTo(x + w - 3, y + 3.5); ctx.stroke();
+        ctx.strokeStyle = C_LIGHT;
+        ctx.beginPath(); ctx.moveTo(x + 3, y + 4.5); ctx.lineTo(x + w - 3, y + 4.5); ctx.stroke();
+        y += 6;
+        return;
+      }
+      const r = { x, y, w, h: rowH };
+      ui.dropItemRects.push(r);
+      const disabled = it.enabled === false;
+      const sel = ui.hoverItem === i && !disabled;
+      if (sel) { ctx.fillStyle = C_TITLE; ctx.fillRect(x, y, w, rowH); }
+      ctx.fillStyle = disabled ? C_GRAY_TEXT : sel ? '#fff' : C_DARK;
+      if (it.checked) ctx.fillText('✓', x + 6, y + rowH / 2 + 1);
+      this.menuText(it.label!, x + padL, y + rowH / 2 + 1, it.accel);
+      if (it.shortcut) {
+        ctx.textAlign = 'right';
+        ctx.fillText(it.shortcut, x + w - padR, y + rowH / 2 + 1);
+        ctx.textAlign = 'left';
+      }
+      y += rowH;
+    });
+  }
+
+  private drawDialog(ui: Ui): void {
+    const ctx = this.ctx;
+    const d = ui.dialog!;
+    const isGoto = d.kind === 'goto';
+    const w = isGoto ? 250 : 230;
+    const h = isGoto ? 150 : 110;
+    const x = Math.round((LOGICAL_W - w) / 2);
+    const y = Math.round((LOGICAL_H - h) / 2) - 10;
+
+    // window: raised face + blue title bar
+    ctx.fillStyle = C_FACE; ctx.fillRect(x, y, w, h);
+    bevel(ctx, x, y, w, h, true, 2);
+    ctx.fillStyle = C_TITLE; ctx.fillRect(x + 3, y + 3, w - 6, 16);
+    drawBevelButton(ctx, x + 4, y + 4, 14, 14);
+    ctx.fillStyle = C_DARK; ctx.fillRect(x + 7, y + 10, 8, 2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Tahoma, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(d.title, x + w / 2, y + 11);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C_DARK;
+    ctx.font = '12px Tahoma, sans-serif';
+    ui.dialogButtons = [];
+    ui.dialogFieldRects = [];
+
+    if (isGoto) {
+      ctx.fillText('Enter a level number and password,', x + 14, y + 32);
+      ctx.fillText('or just a password.', x + 14, y + 46);
+      this.dialogField(ui, 'Level number:', d.levelField ?? '', d.focus === 'level', x + 14, y + 64, x + w - 90);
+      this.dialogField(ui, 'Password:', d.passwordField ?? '', d.focus === 'password', x + 14, y + 86, x + w - 90);
+      this.dialogButton(ui, 'OK', x + w / 2 - 78, y + h - 26, () => ui.confirmDialog());
+      this.dialogButton(ui, 'Cancel', x + w / 2 + 6, y + h - 26, () => { ui.dialog = null; });
+    } else {
+      const lines = d.lines ?? [];
+      lines.forEach((ln, i) => { ctx.textAlign = 'center'; ctx.fillText(ln, x + w / 2, y + 38 + i * 15); });
+      ctx.textAlign = 'left';
+      this.dialogButton(ui, 'OK', x + w / 2 - 36, y + h - 26, () => ui.confirmDialog());
+    }
+  }
+
+  private dialogField(ui: Ui, label: string, value: string, focused: boolean, x: number, y: number, fieldX: number): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = C_DARK;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.font = '12px Tahoma, sans-serif';
+    ctx.fillText(label, x, y + 7);
+    const fw = 72, fh = 16;
+    ctx.fillStyle = '#fff'; ctx.fillRect(fieldX, y, fw, fh);
+    bevel(ctx, fieldX, y, fw, fh, false, 1);
+    ctx.fillStyle = C_DARK;
+    ctx.fillText(value + (focused ? '|' : ''), fieldX + 4, y + 8);
+    ui.dialogFieldRects.push({ which: label.startsWith('Level') ? 'level' : 'password', rect: { x: fieldX, y, w: fw, h: fh } });
+  }
+
+  private dialogButton(ui: Ui, label: string, x: number, y: number, onClick: () => void): void {
+    const ctx = this.ctx;
+    const w = 72, h = 20;
+    ctx.fillStyle = C_FACE; ctx.fillRect(x, y, w, h);
+    bevel(ctx, x, y, w, h, true, 2);
+    ctx.fillStyle = C_DARK;
+    ctx.font = 'bold 11px Tahoma, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + w / 2, y + h / 2 + 1);
+    ctx.textAlign = 'left';
+    ui.dialogButtons.push({ label, rect: { x, y, w, h }, onClick });
   }
 }
 

@@ -1,30 +1,30 @@
-// Entry point: loads assets, runs the fixed-timestep MS game loop, and handles
-// level progression. The logic advances at 5 turns/sec; rendering runs per frame.
+// Entry point: loads assets, runs the 20-ticks/sec MS game loop, drives the
+// Windows 3.1 desktop UI (menus, dialogs, popups), and handles level progression.
 
 import datUrl from '../assets/levels/CHIPS.DAT?url';
 import { parseDat, type LevelSet } from './engine/dat';
 import { initState, type GameState } from './engine/state';
 import { msRuleset } from './engine/logic-ms';
 import { loadAtlas, loadChrome } from './render/atlas';
-import { Renderer } from './render/renderer';
+import { Renderer, LOGICAL_W, LOGICAL_H } from './render/renderer';
 import { Keyboard } from './input/keyboard';
 import { Touch } from './input/touch';
 import { Audio } from './audio/sfx';
 import { Music } from './audio/music';
 import { loadSave, writeSave, recordWin, type SaveData } from './ui/save';
-import { Shell } from './ui/shell';
+import { Ui } from './ui/desktop';
 
 const TICK_MS = 1000 / msRuleset.ticksPerSecond;
 
-type Phase = 'title' | 'playing' | 'won' | 'lost';
-
 class Game {
-  private state!: GameState;
-  private levelIndex = 0;
-  private phase: Phase = 'title';
-  private phaseUntil = 0;
+  state!: GameState;
+  levelIndex = 0;
+  paused = false;
+  colorOn = true;
   private acc = 0;
   private last = 0;
+  private winAt = 0;
+  private ui!: Ui;
   save: SaveData;
 
   constructor(
@@ -36,96 +36,110 @@ class Game {
     private music: Music,
   ) {
     this.save = loadSave();
-    // Load the furthest unlocked level so it shows behind the title overlay.
     this.loadLevel(this.save.highest - 1);
-    this.phase = 'title';
+  }
+
+  setUi(ui: Ui): void {
+    this.ui = ui;
+    ui.levelStart = { title: this.state.level.title, password: this.state.level.password };
   }
 
   private loadLevel(index: number): void {
     this.levelIndex = Math.max(0, Math.min(index, this.set.levels.length - 1));
     this.state = initState(this.set.levels[this.levelIndex]!);
     this.music.setLevel(this.state.level.number);
-    this.phase = 'playing';
+    this.paused = false;
+    this.winAt = 0;
     this.acc = 0;
+    if (this.ui) {
+      this.ui.levelStart = { title: this.state.level.title, password: this.state.level.password };
+      this.ui.dialog = null;
+    }
   }
 
-  /** Begin (or resume) play at a given level index. */
-  begin(index: number): void {
-    this.loadLevel(index);
+  // --- menu actions ---
+  newGame(): void { this.loadLevel(0); }
+  restart(): void { this.loadLevel(this.levelIndex); }
+  next(): void { if (this.levelIndex < this.set.levels.length - 1) this.loadLevel(this.levelIndex + 1); }
+  previous(): void { if (this.levelIndex > 0) this.loadLevel(this.levelIndex - 1); }
+  hasPrevious(): boolean { return this.levelIndex > 0; }
+  togglePause(): void { this.paused = !this.paused; }
+  toggleColor(): void { this.colorOn = !this.colorOn; this.renderer.canvas.style.filter = this.colorOn ? '' : 'grayscale(1)'; }
+  bestTimesLines(): string[] {
+    const e = Object.entries(this.save.bestTimes).sort((a, b) => Number(a[0]) - Number(b[0]));
+    if (!e.length) return ['No best times yet.'];
+    return e.slice(0, 6).map(([lvl, t]) => `Level ${lvl}: ${t}s left`);
   }
 
-  resume(): void {
-    this.begin(this.save.highest - 1);
-  }
-
-  /** Jump to the level whose password matches; returns false if none. */
-  jumpToPassword(pw: string): boolean {
-    const idx = this.set.levels.findIndex((l) => l.password === pw);
-    if (idx < 0) return false;
-    this.begin(idx);
-    return true;
-  }
-
-  pauseToTitle(): void {
-    this.phase = 'title';
+  gotoLevel(level: number | null, password: string): boolean {
+    if (password) {
+      const idx = this.set.levels.findIndex((l) => l.password === password);
+      if (idx >= 0) { this.loadLevel(idx); return true; }
+      return false;
+    }
+    if (level && level >= 1 && level <= this.set.levels.length) { this.loadLevel(level - 1); return true; }
+    return false;
   }
 
   start(): void {
     this.last = performance.now();
     const frame = (now: number) => {
       this.tick(now);
-      this.renderer.draw(this.state);
+      this.renderer.draw(this.state, this.ui);
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   }
 
   private tick(now: number): void {
-    const dt = Math.min(now - this.last, 250); // clamp after tab-out
+    const dt = Math.min(now - this.last, 250);
     this.last = now;
 
-    if (this.phase === 'title') return; // paused behind overlay
-
-    if (this.keyboard.restartRequested) {
-      this.keyboard.restartRequested = false;
-      this.loadLevel(this.levelIndex);
+    // Frozen while a dialog or menu is open, or paused.
+    if (this.ui.blocking || this.ui.openMenu !== null || this.paused) {
+      this.acc = 0;
       return;
     }
 
-    if (this.phase === 'won') {
-      if (now >= this.phaseUntil) this.loadLevel(this.levelIndex + 1);
+    // Win: hold the completed board briefly, then advance.
+    if (this.state.status === 'won') {
+      if (now >= this.winAt) this.loadLevel(this.levelIndex + 1);
       return;
     }
-    if (this.phase === 'lost') {
-      if (now >= this.phaseUntil) this.loadLevel(this.levelIndex);
-      return;
-    }
+    if (this.state.status === 'lost') { this.acc = 0; return; }
 
     this.acc += dt;
-    while (this.acc >= TICK_MS && this.phase === 'playing') {
-      this.acc -= TICK_MS;
+    while (this.acc >= TICK_MS && this.status() === 'playing') {
       const dir = this.keyboard.current() ?? this.touch.current();
+      // A new level is frozen on its password popup until the first move.
+      if (this.ui.levelStart) {
+        if (dir === null) { this.acc = 0; break; }
+        this.ui.levelStart = null;
+      }
+      this.acc -= TICK_MS;
       const before = this.state.chip.pos;
       msRuleset.advanceTick(this.state, { dir });
-      // One tap = one move: clear the buffered tap as soon as Chip moves. Continuous
-      // movement comes from the held-key list, so this doesn't stop a held key.
       if (this.state.chip.pos !== before) this.keyboard.clearPending();
       this.audio.drain(this.state.sounds);
-      if (this.state.status === 'won') this.onWin();
-      else if (this.state.status === 'lost') this.onLost();
+      if (this.status() === 'won') this.onWin();
+      else if (this.status() === 'lost') this.onLost();
     }
   }
 
+  /** Read status as the full union (avoids control-flow narrowing in the loop). */
+  private status(): GameState['status'] {
+    return this.state.status;
+  }
+
   private onWin(): void {
-    this.phase = 'won';
-    this.phaseUntil = performance.now() + 1600;
+    this.winAt = performance.now() + 1500;
     this.save = recordWin(this.save, this.state.level.number, Math.max(0, this.state.timeLeft));
     writeSave(this.save);
   }
 
   private onLost(): void {
-    this.phase = 'lost';
-    this.phaseUntil = performance.now() + 1400;
+    // Win3.1 message box; OK restarts the level (matching the original).
+    this.ui.message("Chip's Challenge", this.state.deathCause || 'Ooops!', () => this.restart());
   }
 }
 
@@ -144,43 +158,59 @@ async function main(): Promise<void> {
   document.body.appendChild(touch.element);
 
   const keyboard = new Keyboard();
-  keyboard.attach();
   const audio = new Audio();
   const music = new Music();
-  const unlock = () => {
-    void audio.unlock();
-    music.start();
-  };
+
+  const game = new Game(set, renderer, keyboard, touch, audio, music);
+  (window as unknown as { __game: Game }).__game = game;
+
+  const ui = new Ui({
+    newGame: () => game.newGame(),
+    restart: () => game.restart(),
+    next: () => game.next(),
+    previous: () => game.previous(),
+    hasPrevious: () => game.hasPrevious(),
+    gotoLevel: (lvl, pw) => game.gotoLevel(lvl, pw),
+    togglePause: () => game.togglePause(),
+    isPaused: () => game.paused,
+    toggleMusic: () => { music.toggleMute(); },
+    toggleSfx: () => { audio.muted = !audio.muted; },
+    toggleColor: () => game.toggleColor(),
+    musicOn: () => !music.muted,
+    sfxOn: () => !audio.muted,
+    colorOn: () => game.colorOn,
+    bestTimesLines: () => game.bestTimesLines(),
+  });
+  game.setUi(ui);
+
+  // Unlock audio on the first gesture.
+  const unlock = () => { void audio.unlock(); music.start(); };
   window.addEventListener('keydown', unlock, { once: true });
   window.addEventListener('pointerdown', unlock, { once: true });
-  // M toggles mute for sound + music.
+
+  // UI keyboard takes precedence over movement (menus, dialogs, shortcuts).
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyM' && !(e.target instanceof HTMLInputElement)) {
-      audio.muted = music.toggleMute();
-    }
+    if (ui.key(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
+  });
+  keyboard.attach();
+
+  // Pointer -> menus / dialogs (in logical canvas coordinates).
+  const toLogical = (e: PointerEvent) => {
+    const r = renderer.canvas.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * LOGICAL_W, y: ((e.clientY - r.top) / r.height) * LOGICAL_H };
+  };
+  renderer.canvas.addEventListener('pointerdown', (e) => {
+    const { x, y } = toLogical(e);
+    if (ui.pointerDown(x, y)) e.preventDefault();
+  });
+  renderer.canvas.addEventListener('pointermove', (e) => {
+    const { x, y } = toLogical(e);
+    ui.pointerMove(x, y);
   });
 
   const fit = () => renderer.fit(app);
   fit();
   window.addEventListener('resize', fit);
-
-  const game = new Game(set, renderer, keyboard, touch, audio, music);
-  (window as unknown as { __game: Game }).__game = game;
-  const shell = new Shell({
-    onStart: () => game.resume(),
-    onPassword: (pw) => game.jumpToPassword(pw),
-  });
-  shell.setHighest(game.save.highest);
-  shell.showTitle(game.save.highest);
-
-  // P opens the password dialog (pauses behind the overlay).
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyP' && !(e.target instanceof HTMLInputElement)) {
-      game.pauseToTitle();
-      shell.setHighest(game.save.highest);
-      shell.showPassword();
-    }
-  });
 
   game.start();
 }

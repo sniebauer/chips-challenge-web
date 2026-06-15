@@ -7,7 +7,7 @@ export class Music {
   private tracks: string[];
   private idx = 0;
   private started = false;
-  muted = false;
+  muted = true; // background music is off by default, like the original
 
   constructor() {
     this.el = new Audio();
