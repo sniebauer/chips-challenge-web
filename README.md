@@ -5,10 +5,11 @@ Challenge**. No VM, no DOS emulator, no recompiled binary — a real reimplement
 of the MS game engine in TypeScript that runs the original level data (`CHIPS.DAT`,
 149 levels) and renders the original artwork extracted from `CHIPS.EXE`.
 
-- **Engine:** MS (Windows) ruleset — instantaneous moves at 5 turns/sec, the MS
-  blob PRNG, teleport bounce-back, ice/force sliding, traps, cloners, toggle walls,
-  tank reversal. Structured behind a `Ruleset` interface so a Lynx ruleset can be
-  added later behind a toggle.
+- **Engine:** the MS (Windows) ruleset, ported faithfully from Tile World's
+  `mslogic.c` as a 20-ticks/sec clock — the force-floor override, ice/force sliding
+  via a slip list, the bit-exact MS PRNG, traps, cloners, toggle walls, tank
+  reversal, teleports, and the exact creature AI. Verified by replaying the recorded
+  MS solution set (121/141). Behind a `Ruleset` interface so Lynx can slot in later.
 - **Stack:** vanilla TypeScript + HTML5 Canvas, built with Vite, shipped as static
   files. The production bundle is ~10 kB gzipped.
 - **Presentation:** the full original Windows 3.1 window is reproduced — blue title
@@ -90,7 +91,7 @@ npm run gen-music
 `test/tws-regression.test.ts` replays the canonical public CC1 **MS solution set**
 (`assets/solutions/public_chips.dac.tws`, parsed by `src/engine/tws.ts`) through the
 engine and checks each level is solved. It is the objective measure of engine
-accuracy and guards against regressions. The engine currently replays **109 of 141**
+accuracy and guards against regressions. The engine currently replays **121 of 141**
 keyboard solutions to a win; the remaining gaps are individual MS quirks (below).
 
 ## Status / roadmap
@@ -104,8 +105,8 @@ keyboard solutions to a win; the remaining gaps are individual MS quirks (below)
   random-force levels.
 - ✅ Full Windows 3.1 window chrome + INFOWND panel with LCD displays
 - ✅ Renderer, keyboard + touch input, sound effects + music, title/password UI, save
-- ✅ TWS solution-replay regression harness (109/141 keyboard solutions pass)
-- ⏳ The remaining ~30 replay failures are individual MS quirks: exact slide-delay
+- ✅ TWS solution-replay regression harness (121/141 keyboard solutions pass)
+- ⏳ The remaining ~20 replay failures are individual MS quirks: exact slide-delay
   move ordering, block "slap"/mutant-block cases, and deferred button pushes.
 - ⏳ Lynx ruleset toggle (the `Ruleset` interface is the seam).
 ```

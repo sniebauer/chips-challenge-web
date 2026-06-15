@@ -77,6 +77,6 @@ describe('TWS solution replay (MS fidelity)', () => {
     for (const n of [1, 2, 3, 4, 5]) {
       expect(solved, `LESSON ${n} should replay to a win`).toContain(n);
     }
-    expect(solved.length, 'MS replay fidelity regressed below baseline').toBeGreaterThanOrEqual(105);
+    expect(solved.length, 'MS replay fidelity regressed below baseline').toBeGreaterThanOrEqual(118);
   });
 });
