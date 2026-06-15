@@ -90,21 +90,22 @@ npm run gen-music
 `test/tws-regression.test.ts` replays the canonical public CC1 **MS solution set**
 (`assets/solutions/public_chips.dac.tws`, parsed by `src/engine/tws.ts`) through the
 engine and checks each level is solved. It is the objective measure of engine
-accuracy and guards against regressions. Currently the engine solves the early
-lessons and a baseline set of levels; the main remaining gaps are documented below.
+accuracy and guards against regressions. The engine currently replays **109 of 141**
+keyboard solutions to a win; the remaining gaps are individual MS quirks (below).
 
 ## Status / roadmap
 
 - ✅ DAT parser (all 149 levels, passwords verified against the shipped list)
-- ✅ MS engine: Chip + creatures (correct move order, wall-following, half-speed
-  teeth/blobs), items/doors/boots, ice/force, blocks, bombs, traps, cloners, toggle
-  walls, teleports, thief; runs all 149 levels without error
+- ✅ **MS engine: a faithful 20-ticks/sec port of Tile World's mslogic.c** — Chip +
+  creatures (correct move order, wall-following, half-speed teeth/blobs, exact
+  creature AI), items/doors/boots, ice/force with the slip list + force-floor
+  override, blocks, bombs, traps, cloners, toggle walls, teleports, thief.
+- ✅ **Bit-exact MS PRNG** (TW's LCG + permutations) for deterministic blob/walker/
+  random-force levels.
 - ✅ Full Windows 3.1 window chrome + INFOWND panel with LCD displays
 - ✅ Renderer, keyboard + touch input, sound effects + music, title/password UI, save
-- ✅ TWS solution-replay regression harness
-- ⏳ **Sub-turn timing**: ~108 levels use the force-floor override (Chip moves every
-  1/20s tick, not every 1/5s turn). Replaying those exactly needs a 20-ticks/sec
-  engine (creatures every 4th tick) instead of the current fixed 5/sec turn loop.
-- ⏳ **Bit-exact MS PRNG** for deterministic blob/walker/random-force levels.
+- ✅ TWS solution-replay regression harness (109/141 keyboard solutions pass)
+- ⏳ The remaining ~30 replay failures are individual MS quirks: exact slide-delay
+  move ordering, block "slap"/mutant-block cases, and deferred button pushes.
 - ⏳ Lynx ruleset toggle (the `Ruleset` interface is the seam).
 ```
