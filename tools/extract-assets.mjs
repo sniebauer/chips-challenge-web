@@ -109,6 +109,21 @@ console.log(`  wrote assets/tiles.png (${width}x${height}, ${width / 32}x${heigh
   console.log('  wrote public/favicon.png');
 }
 
+// --- 1b. Window chrome: info panel, green background, LCD digit font ---
+console.log('Extracting window chrome from CHIPS.EXE ...');
+ensure(join(OUT, 'chrome'));
+const CHROME = [
+  ['OBJ_INFOWND', 'INFOWND', 'infownd.png'],
+  ['OBJ_BACKGROUND', 'BACKGROUND', 'background.png'],
+  ['OBJ_DIGITS', '200', 'digits.png'],
+];
+for (const [, resName, outName] of CHROME) {
+  const bmp = join(TMP, `${outName}.bmp`);
+  sh('wrestool', ['-x', '--type=2', `--name=${resName}`, exe, '-o', bmp]);
+  sh('ffmpeg', ['-y', '-loglevel', 'error', '-i', bmp, '-pix_fmt', 'rgba', join(OUT, 'chrome', outName)]);
+  console.log(`  chrome ${resName} -> ${outName}`);
+}
+
 // --- 2. Level data ---
 copyFileSync(join(SRC, 'CHIPS.DAT'), join(OUT, 'levels', 'CHIPS.DAT'));
 console.log('  copied CHIPS.DAT');

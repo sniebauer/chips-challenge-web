@@ -4,6 +4,9 @@
 // draw creatures/Chip on top of terrain live 3 columns (0x30 codes) further on.
 
 import tilesUrl from '../../assets/tiles.png';
+import infowndUrl from '../../assets/chrome/infownd.png';
+import backgroundUrl from '../../assets/chrome/background.png';
+import digitsUrl from '../../assets/chrome/digits.png';
 
 export const TILE_PX = 32;
 export const ATLAS_COLS = 13;
@@ -12,11 +15,31 @@ export interface Atlas {
   image: HTMLImageElement;
 }
 
-export async function loadAtlas(): Promise<Atlas> {
+/** Original window-chrome bitmaps extracted from CHIPS.EXE. */
+export interface Chrome {
+  infownd: HTMLImageElement; // 154x300 info panel
+  background: HTMLImageElement; // 237x196 green circuit board (tiled)
+  digits: HTMLImageElement; // 17x552 LCD digit font strip
+}
+
+async function img(src: string): Promise<HTMLImageElement> {
   const image = new Image();
-  image.src = tilesUrl;
+  image.src = src;
   await image.decode();
-  return { image };
+  return image;
+}
+
+export async function loadAtlas(): Promise<Atlas> {
+  return { image: await img(tilesUrl) };
+}
+
+export async function loadChrome(): Promise<Chrome> {
+  const [infownd, background, digits] = await Promise.all([
+    img(infowndUrl),
+    img(backgroundUrl),
+    img(digitsUrl),
+  ]);
+  return { infownd, background, digits };
 }
 
 /** Source x/y in the atlas for an opaque tile drawn directly (terrain, blocks). */
