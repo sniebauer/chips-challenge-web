@@ -31,7 +31,7 @@ export class Keyboard {
     e.preventDefault();
     if (!this.held.includes(d)) this.held.push(d);
     this.pending = d;
-    this.pendingTtl = 4; // one 1/5s move window at 20 ticks/sec
+    this.pendingTtl = 5; // hold a tap long enough to reach Chip's next move window
   };
 
   private onKeyUp = (e: KeyboardEvent): void => {
@@ -40,7 +40,13 @@ export class Keyboard {
     this.held = this.held.filter((x) => x !== d);
   };
 
-  /** The direction to apply this turn: a still-held key, else a one-shot buffered tap. */
+  /** Consume the buffered tap once a move has actually happened. */
+  clearPending(): void {
+    this.pending = null;
+    this.pendingTtl = 0;
+  }
+
+  /** The direction to apply this tick: a still-held key, else a buffered tap. */
   current(): Direction | null {
     if (this.held.length) return this.held[this.held.length - 1]!;
     if (this.pending !== null && this.pendingTtl > 0) {

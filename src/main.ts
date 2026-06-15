@@ -105,7 +105,11 @@ class Game {
     while (this.acc >= TICK_MS && this.phase === 'playing') {
       this.acc -= TICK_MS;
       const dir = this.keyboard.current() ?? this.touch.current();
+      const before = this.state.chip.pos;
       msRuleset.advanceTick(this.state, { dir });
+      // One tap = one move: clear the buffered tap as soon as Chip moves. Continuous
+      // movement comes from the held-key list, so this doesn't stop a held key.
+      if (this.state.chip.pos !== before) this.keyboard.clearPending();
       this.audio.drain(this.state.sounds);
       if (this.state.status === 'won') this.onWin();
       else if (this.state.status === 'lost') this.onLost();
