@@ -11,8 +11,12 @@ export interface MoveInput {
 
 export interface Ruleset {
   readonly name: string;
-  /** Logic turns per real second (MS = 5). */
+  /** Chip's nominal moves per second (MS = 5). */
   readonly turnsPerSecond: number;
-  /** Advance the world by one logic turn. */
+  /** Master-clock ticks per second (MS = 20). */
+  readonly ticksPerSecond: number;
+  /** Advance the world by one 1/20s tick. */
+  advanceTick(state: GameState, input: MoveInput): void;
+  /** Advance one 1/5s turn (= 4 ticks); convenience for turn-based callers. */
   stepTurn(state: GameState, input: MoveInput): void;
 }

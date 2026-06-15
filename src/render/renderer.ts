@@ -160,8 +160,8 @@ export class Renderer {
     bevel(ctx, FRAME_X, FRAME_Y, VIEW_PX + 2 * FRAME, VIEW_PX + 2 * FRAME, false, 2);
     bevel(ctx, VPX - 2, VPY - 2, VIEW_PX + 4, VIEW_PX + 4, false, 2);
 
-    const camX = clamp(tx(state.chipPos) - (VIEW >> 1), 0, MAP_W - VIEW);
-    const camY = clamp(ty(state.chipPos) - (VIEW >> 1), 0, MAP_H - VIEW);
+    const camX = clamp(tx(state.chip.pos) - (VIEW >> 1), 0, MAP_W - VIEW);
+    const camY = clamp(ty(state.chip.pos) - (VIEW >> 1), 0, MAP_H - VIEW);
 
     for (let row = 0; row < VIEW; row++) {
       for (let col = 0; col < VIEW; col++) {
@@ -178,15 +178,15 @@ export class Renderer {
       else this.blitOverlay(m.id + m.dir, dx, dy);
     }
     {
-      const cx = VPX + (tx(state.chipPos) - camX) * TILE_PX;
-      const cy = VPY + (ty(state.chipPos) - camY) * TILE_PX;
-      const swimming = state.terrain[state.chipPos] === TILE.WATER;
-      const code = (swimming ? TILE.CHIP_SWIM_N : TILE.CHIP_N) + state.chipDir;
+      const cx = VPX + (tx(state.chip.pos) - camX) * TILE_PX;
+      const cy = VPY + (ty(state.chip.pos) - camY) * TILE_PX;
+      const swimming = state.terrain[state.chip.pos] === TILE.WATER;
+      const code = (swimming ? TILE.CHIP_SWIM_N : TILE.CHIP_N) + state.chip.dir;
       if (swimming) this.blit(code, cx, cy);
       else this.blitOverlay(code, cx, cy);
     }
 
-    if (state.terrain[state.chipPos] === TILE.HINT && state.level.hint) {
+    if (state.terrain[state.chip.pos] === TILE.HINT && state.level.hint) {
       ctx.fillStyle = 'rgba(0,0,0,0.78)';
       ctx.fillRect(VPX, VPY + VIEW_PX - 44, VIEW_PX, 44);
       ctx.fillStyle = '#ffe070';

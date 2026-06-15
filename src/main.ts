@@ -14,7 +14,7 @@ import { Music } from './audio/music';
 import { loadSave, writeSave, recordWin, type SaveData } from './ui/save';
 import { Shell } from './ui/shell';
 
-const TURN_MS = 1000 / msRuleset.turnsPerSecond;
+const TICK_MS = 1000 / msRuleset.ticksPerSecond;
 
 type Phase = 'title' | 'playing' | 'won' | 'lost';
 
@@ -102,10 +102,10 @@ class Game {
     }
 
     this.acc += dt;
-    while (this.acc >= TURN_MS && this.phase === 'playing') {
-      this.acc -= TURN_MS;
+    while (this.acc >= TICK_MS && this.phase === 'playing') {
+      this.acc -= TICK_MS;
       const dir = this.keyboard.current() ?? this.touch.current();
-      msRuleset.stepTurn(this.state, { dir });
+      msRuleset.advanceTick(this.state, { dir });
       this.audio.drain(this.state.sounds);
       if (this.state.status === 'won') this.onWin();
       else if (this.state.status === 'lost') this.onLost();

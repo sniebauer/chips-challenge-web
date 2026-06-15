@@ -1,7 +1,6 @@
-// Live game state for the MS ruleset, built from a parsed Level.
-// Spatial model: a `terrain` grid (static lower layer) plus an object list of
-// mobs (monsters and blocks) and a separately tracked Chip. This reproduces MS
-// behavior for the vast majority of levels while staying easy to reason about.
+// Live game state for the MS ruleset (20-ticks/sec model, ported from Tile
+// World's mslogic.c). Spatial model: a static `terrain` grid (lower layer) plus
+// Mob objects for Chip, monsters and blocks. A slip list drives ice/force sliding.
 
 import type { Level } from './dat';
 import { MAP_W, MAP_H, MAP_AREA } from './dat';
@@ -20,17 +19,30 @@ import {
 
 export { MAP_W, MAP_H, MAP_AREA };
 
-export type MobKind = 'monster' | 'block';
+// Creature-state flags (CS_* in mslogic.c).
+export const CS_SLIP = 1 << 0; // on the slip list (ice or, for creatures, force)
+export const CS_SLIDE = 1 << 1; // Chip on a force floor (can override the slide)
+export const CS_HASMOVED = 1 << 2; // already moved this 1/5s window
+export const CS_TURNING = 1 << 3;
+export const CS_RELEASED = 1 << 4; // released from a bear trap
+export const CS_CLONING = 1 << 5; // a freshly cloned creature (skip its first move)
+
+export type MobKind = 'chip' | 'monster' | 'block';
 
 export interface Mob {
-  pos: number; // cell index
+  pos: number;
   dir: Direction;
-  /** Species base code for monsters (e.g. BUG_N); TILE.BLOCK for blocks. */
+  /** Species base code (BUG_N..), TILE.BLOCK, or TILE.CHIP. */
   id: TileCode;
   kind: MobKind;
   dead: boolean;
-  /** True while sliding on ice / force floor (so it keeps moving). */
-  sliding: boolean;
+  state: number; // CS_* flags
+  tdir: Direction | null; // direction chosen this tick
+}
+
+export interface SlipEntry {
+  mob: Mob;
+  dir: Direction;
 }
 
 export interface CloneTemplate {
@@ -43,63 +55,46 @@ export type GameStatus = 'playing' | 'won' | 'lost';
 
 export interface GameState {
   level: Level;
-  terrain: Uint8Array; // MAP_AREA static terrain (mutated as the world changes)
-  chipPos: number;
-  /** Direction Chip faces (also used for rendering when standing still). */
-  chipDir: Direction;
+  terrain: Uint8Array;
+  chip: Mob;
+  chipWait: number;
   chipsLeft: number;
   keys: [number, number, number, number]; // blue, red, green, yellow
   boots: [boolean, boolean, boolean, boolean]; // water, fire, ice, force
+  /** Monsters then blocks, in MS move order. */
   mobs: Mob[];
-  /** Clone templates keyed by cell index (creature/block sitting on a clone machine). */
+  slips: SlipEntry[];
   clones: Map<number, CloneTemplate>;
-  trapLinks: Map<number, number[]>; // brown button cell -> trap cells
-  clonerLinks: Map<number, number[]>; // red button cell -> clone machine cells
-  /** Trap cells currently open (their brown button is pressed this turn). */
+  /** Clone-machine cells currently producing a clone (FS_CLONING). */
+  cloning: Set<number>;
+  trapLinks: Map<number, number[]>;
+  clonerLinks: Map<number, number[]>;
   openTraps: Set<number>;
   rng: MsRandom;
   status: GameStatus;
   deathCause: string;
-  /** Ticks elapsed at the 20/sec master clock. */
-  tick: number;
-  /** Whole seconds left (timeLimit countdown); -1 when untimed. */
+  /** 20-ticks/sec master clock. */
+  currentTime: number;
+  stepping: number;
+  /** Last forced-slide direction Chip experienced (for teleport-onto-block). */
+  lastSlipDir: Direction | null;
+  /** Whole seconds left; -1 when untimed. */
   timeLeft: number;
-  /** Pending tank reversal (blue button pressed). */
-  reverseTanks: boolean;
-  /** Sound-effect event names queued this turn; drained by the audio layer. */
   sounds: string[];
 }
 
 /** Canonical sound-effect event names emitted by the ruleset. */
 export const SND = {
-  CHIP: 'chip',
-  ITEM: 'item',
-  DOOR: 'door',
-  BUMP: 'bump',
-  BUTTON: 'button',
-  TELEPORT: 'teleport',
-  WATER: 'water',
-  BOMB: 'bomb',
-  DIE: 'die',
-  WIN: 'win',
-  SOCKET: 'socket',
+  CHIP: 'chip', ITEM: 'item', DOOR: 'door', BUMP: 'bump', BUTTON: 'button',
+  TELEPORT: 'teleport', WATER: 'water', BOMB: 'bomb', DIE: 'die', WIN: 'win', SOCKET: 'socket',
 } as const;
 
 export const keyColorIndex: Record<number, number> = {
-  [TILE.KEY_BLUE]: 0,
-  [TILE.KEY_RED]: 1,
-  [TILE.KEY_GREEN]: 2,
-  [TILE.KEY_YELLOW]: 3,
-  [TILE.DOOR_BLUE]: 0,
-  [TILE.DOOR_RED]: 1,
-  [TILE.DOOR_GREEN]: 2,
-  [TILE.DOOR_YELLOW]: 3,
+  [TILE.KEY_BLUE]: 0, [TILE.KEY_RED]: 1, [TILE.KEY_GREEN]: 2, [TILE.KEY_YELLOW]: 3,
+  [TILE.DOOR_BLUE]: 0, [TILE.DOOR_RED]: 1, [TILE.DOOR_GREEN]: 2, [TILE.DOOR_YELLOW]: 3,
 };
 export const bootIndex: Record<number, number> = {
-  [TILE.BOOTS_WATER]: 0,
-  [TILE.BOOTS_FIRE]: 1,
-  [TILE.BOOTS_ICE]: 2,
-  [TILE.BOOTS_FORCE]: 3,
+  [TILE.BOOTS_WATER]: 0, [TILE.BOOTS_FIRE]: 1, [TILE.BOOTS_ICE]: 2, [TILE.BOOTS_FORCE]: 3,
 };
 
 export function idx(x: number, y: number): number {
@@ -119,24 +114,23 @@ export function initState(level: Level, seed?: number): GameState {
   const terrain = new Uint8Array(MAP_AREA);
   const clones = new Map<number, CloneTemplate>();
   const activeMonsters = new Map<number, Mob>();
-  let chipPos = 0;
-  let chipDir: Direction = Dir.S;
+  let chip: Mob = { pos: 0, dir: Dir.S, id: TILE.CHIP, kind: 'chip', dead: false, state: 0, tdir: null };
 
   for (let i = 0; i < MAP_AREA; i++) {
     const upper = level.top[i]! as TileCode;
     const lower = level.bottom[i]! as TileCode;
 
     if (isChipCode(upper)) {
-      chipPos = i;
-      chipDir = (upper - TILE.CHIP_N) as Direction;
-      terrain[i] = lower; // terrain Chip stands on
+      chip = { pos: i, dir: (upper - TILE.CHIP_N) as Direction, id: TILE.CHIP, kind: 'chip', dead: false, state: 0, tdir: null };
+      terrain[i] = lower;
     } else if (isBlockCode(upper)) {
+      const dir = blockDir(upper);
       if (lower === TILE.CLONE_MACHINE) {
         terrain[i] = TILE.CLONE_MACHINE;
-        clones.set(i, { id: TILE.BLOCK, dir: blockDir(upper), kind: 'block' });
+        clones.set(i, { id: TILE.BLOCK, dir, kind: 'block' });
       } else {
         terrain[i] = lower;
-        activeMonsters.set(i, { pos: i, dir: blockDir(upper), id: TILE.BLOCK, kind: 'block', dead: false, sliding: false });
+        activeMonsters.set(i, { pos: i, dir, id: TILE.BLOCK, kind: 'block', dead: false, state: 0, tdir: null });
       }
     } else if (isCreatureCode(upper)) {
       const base = creatureBase(upper);
@@ -146,50 +140,51 @@ export function initState(level: Level, seed?: number): GameState {
         clones.set(i, { id: base, dir, kind: 'monster' });
       } else {
         terrain[i] = lower;
-        activeMonsters.set(i, { pos: i, dir, id: base, kind: 'monster', dead: false, sliding: false });
+        activeMonsters.set(i, { pos: i, dir, id: base, kind: 'monster', dead: false, state: 0, tdir: null });
       }
     } else {
-      // Static terrain or item (chip/key/boot) sits directly in the layer.
       terrain[i] = upper;
     }
   }
 
-  // Order monsters per the DAT monster list (MS move order); append any stragglers.
-  const mobs: Mob[] = [];
+  // Monsters in DAT monster-list order, then any stragglers; blocks appended after.
+  const monsters: Mob[] = [];
+  const blocks: Mob[] = [];
   const seen = new Set<number>();
   for (const m of level.monsters) {
     const i = idx(m.x, m.y);
     const mob = activeMonsters.get(i);
     if (mob && !seen.has(i)) {
-      mobs.push(mob);
+      (mob.kind === 'block' ? blocks : monsters).push(mob);
       seen.add(i);
     }
   }
   for (const [i, mob] of activeMonsters) {
-    if (!seen.has(i)) mobs.push(mob);
+    if (!seen.has(i)) (mob.kind === 'block' ? blocks : monsters).push(mob);
   }
-
-  const chipsLeft = level.chipsRequired;
 
   return {
     level,
     terrain,
-    chipPos,
-    chipDir,
-    chipsLeft,
+    chip,
+    chipWait: 0,
+    chipsLeft: level.chipsRequired,
     keys: [0, 0, 0, 0],
     boots: [false, false, false, false],
-    mobs,
+    mobs: [...monsters, ...blocks],
+    slips: [],
     clones,
+    cloning: new Set<number>(),
     trapLinks: buildLinks(level.trapLinks),
     clonerLinks: buildLinks(level.clonerLinks),
     openTraps: new Set<number>(),
     rng: new MsRandom(seed),
     status: 'playing',
     deathCause: '',
-    tick: 0,
+    currentTime: 0,
+    stepping: 0,
+    lastSlipDir: null,
     timeLeft: level.timeLimit > 0 ? level.timeLimit : -1,
-    reverseTanks: false,
     sounds: [],
   };
 }
@@ -211,4 +206,3 @@ function buildLinks(links: { button: { x: number; y: number }; trap?: { x: numbe
   }
   return m;
 }
-

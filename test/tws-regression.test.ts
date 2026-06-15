@@ -20,16 +20,15 @@ const DIR: Record<number, Direction> = { 0: Dir.N, 1: Dir.W, 2: Dir.S, 3: Dir.E 
 
 function replay(level: Level, sol: TwsSolution): boolean {
   const state = initState(level, sol.rndSeed);
-  const inputs: (Direction | null)[] = [];
-  let maxTurn = 0;
+  const inputs: (Direction | null)[] = []; // indexed by absolute tick
+  let maxTick = 0;
   for (const m of sol.moves) {
-    const turn = m.tick >> 2;
-    inputs[turn] = DIR[m.dirIndex]!;
-    if (turn > maxTurn) maxTurn = turn;
+    inputs[m.tick] = DIR[m.dirIndex]!;
+    if (m.tick > maxTick) maxTick = m.tick;
   }
-  const limit = maxTurn + 120; // slack to let post-move slides finish
-  for (let turn = 0; turn <= limit && state.status === 'playing'; turn++) {
-    msRuleset.stepTurn(state, { dir: inputs[turn] ?? null });
+  const limit = Math.max(maxTick, sol.totalTicks) + 400; // ticks; slack for final slides
+  for (let t = 0; t <= limit && state.status === 'playing'; t++) {
+    msRuleset.advanceTick(state, { dir: inputs[t] ?? null });
   }
   return state.status === 'won';
 }
@@ -70,14 +69,14 @@ describe('TWS solution replay (MS fidelity)', () => {
         (skipped.length ? ` (${skipped.length} skipped: mouse/odd-step)` : '') +
         `\n  solved: ${solved.join(',')}` +
         `\n  failed: ${failed.join(',')}` +
-        `\n  (remaining gaps: ~108 levels use sub-turn force-floor moves the 5/sec` +
-        `\n   turn model can't represent, plus levels needing a bit-exact MS PRNG.)`,
+        `\n  (remaining gaps are individual MS quirks: exact slide-delay ordering,` +
+        `\n   block "slap"/mutant cases, deferred button pushes, etc.)`,
     );
     // Regression guards: the early lessons must always replay, and the overall
     // solved count must not drop below the established baseline.
     for (const n of [1, 2, 3, 4, 5]) {
       expect(solved, `LESSON ${n} should replay to a win`).toContain(n);
     }
-    expect(solved.length, 'MS replay fidelity regressed below baseline').toBeGreaterThanOrEqual(33);
+    expect(solved.length, 'MS replay fidelity regressed below baseline').toBeGreaterThanOrEqual(105);
   });
 });
