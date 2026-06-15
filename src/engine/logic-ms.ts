@@ -77,7 +77,7 @@ function mobAt(state: GameState, pos: number): Mob | null {
 }
 
 // --- can-make-move (ported from canmakemove) ---
-const CMM_NOLEAVECHECK = 1, CMM_NOEXPOSEWALLS = 2, CMM_NOPUSHING = 4, CMM_NOFIRECHECK = 8;
+const CMM_NOLEAVECHECK = 1, CMM_NOEXPOSEWALLS = 2, CMM_NOPUSHING = 4, CMM_NOFIRECHECK = 8, CMM_CLONECANTBLOCK = 16;
 
 function canMakeMove(state: GameState, mob: Mob, dir: Direction, flags: number): boolean {
   const x = tx(mob.pos) + DX[dir];
@@ -123,7 +123,11 @@ function canMakeMove(state: GameState, mob: Mob, dir: Direction, flags: number):
     if (to === state.chip.pos) return true;
     if (!(movelaw(floor, 'block') & bit)) return false;
   } else {
-    if (occ) return false; // monster blocked by any mob
+    if (occ) {
+      // a clone is not blocked by an identical creature already in the way
+      if ((flags & CMM_CLONECANTBLOCK) && occ.id === mob.id && occ.dir === mob.dir) return true;
+      return false; // monster blocked by any mob
+    }
     if (!(movelaw(floor, 'monster') & bit)) return false;
     if (floor === TILE.FIRE && (mob.id === TILE.BUG_N || mob.id === TILE.WALKER_N) && !(flags & CMM_NOFIRECHECK))
       return false;
@@ -334,17 +338,13 @@ function toggleWalls(state: GameState): void {
   }
 }
 function springTrap(state: GameState, buttonPos: number): void {
+  // Just release any trapped creature; it moves on its own next creature tick.
   const traps = state.trapLinks.get(buttonPos);
-  if (!traps || buttonDepth > MAX_BUTTON_DEPTH) return;
-  buttonDepth++;
+  if (!traps) return;
   for (const t of traps) {
     const m = mobAt(state, t);
-    if (m && (m.state & (CS_SLIP | CS_SLIDE)) === 0) {
-      m.state |= CS_RELEASED;
-      if (m.tdir === null) advanceCreature(state, m, m.dir);
-    }
+    if (m) m.state |= CS_RELEASED;
   }
-  buttonDepth--;
 }
 function activateCloner(state: GameState, buttonPos: number): void {
   const targets = state.clonerLinks.get(buttonPos);
@@ -353,11 +353,18 @@ function activateCloner(state: GameState, buttonPos: number): void {
   for (const cell of targets) {
     const tmpl = state.clones.get(cell);
     if (!tmpl) continue;
-    if (mobAt(state, cell)) continue; // still occupied by a previous clone
-    const clone: Mob = { pos: cell, dir: tmpl.dir, id: tmpl.id, kind: tmpl.kind, dead: false, state: CS_CLONING, tdir: null };
-    if (!canMakeMove(state, clone, tmpl.dir, CMM_NOLEAVECHECK)) continue;
-    state.mobs.push(clone);
-    advanceCreature(state, clone, tmpl.dir);
+    if (mobAt(state, cell)) continue; // FS_CLONING: machine still busy
+    const dummy: Mob = { pos: cell, dir: tmpl.dir, id: tmpl.id, kind: tmpl.kind, dead: false, state: 0, tdir: null };
+    if (!canMakeMove(state, dummy, tmpl.dir, CMM_NOLEAVECHECK | CMM_CLONECANTBLOCK)) continue;
+    if (tmpl.kind === 'block') {
+      // a cloned block moves off the machine immediately
+      state.mobs.push(dummy);
+      advanceCreature(state, dummy, tmpl.dir);
+    } else {
+      // a cloned monster waits on the machine; it moves on a later creature tick
+      dummy.state = CS_CLONING;
+      state.mobs.push(dummy);
+    }
   }
   buttonDepth--;
 }
@@ -373,6 +380,7 @@ function chooseCreatureMove(state: GameState, mob: Mob): void {
   if (mob.state & (CS_SLIP | CS_SLIDE)) return;
 
   const d = mob.dir;
+  let pdir: Direction = d; // direction kept if every choice is blocked
   const onController = state.terrain[mob.pos] === TILE.CLONE_MACHINE || state.terrain[mob.pos] === TILE.TRAP;
   let choices: (Direction | null)[];
 
@@ -393,7 +401,7 @@ function chooseCreatureMove(state: GameState, mob: Mob): void {
       case TILE.BLOB_N: { const a = [d, left(d), back(d), right(d)]; state.rng.permute4(a); choices = a; break; }
       case TILE.BUG_N: choices = [left(d), d, right(d), back(d)]; break;
       case TILE.PARAMECIUM_N: choices = [right(d), d, left(d), back(d)]; break;
-      case TILE.TEETH_N: choices = teethChoices(state, mob); break;
+      case TILE.TEETH_N: { choices = teethChoices(state, mob); pdir = (choices[0] as Direction) ?? d; break; }
       default: choices = [d]; break;
     }
   }
@@ -403,7 +411,8 @@ function chooseCreatureMove(state: GameState, mob: Mob): void {
     mob.tdir = dir;
     if (canMakeMove(state, mob, dir, 0)) return;
   }
-  mob.tdir = choices[0] ?? d;
+  // Every option blocked: keep the original facing (teeth keep their primary homing dir).
+  mob.tdir = pdir;
 }
 
 function teethChoices(state: GameState, mob: Mob): Direction[] {
