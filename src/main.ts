@@ -66,9 +66,28 @@ class Game {
   // --- menu actions ---
   newGame(): void { this.loadLevel(0); }
   restart(): void { this.loadLevel(this.levelIndex); }
-  next(): void { if (this.levelIndex < this.set.levels.length - 1) this.loadLevel(this.levelIndex + 1); }
-  previous(): void { if (this.levelIndex > 0) this.loadLevel(this.levelIndex - 1); }
+  next(): void { this.goToIndex(this.levelIndex + 1); }
+  previous(): void { this.goToIndex(this.levelIndex - 1); }
   hasPrevious(): boolean { return this.levelIndex > 0; }
+
+  /** A level is reachable without a password once it has been visited. */
+  private isVisited(levelNumber: number): boolean {
+    return levelNumber <= this.save.highest;
+  }
+  private unlock(levelNumber: number): void {
+    if (levelNumber > this.save.highest) { this.save.highest = levelNumber; writeSave(this.save); }
+  }
+
+  /** Go to a level by index; prompt for its password if it hasn't been visited. */
+  private goToIndex(index: number): void {
+    if (index < 0 || index >= this.set.levels.length) return;
+    const lvl = this.set.levels[index]!;
+    if (this.isVisited(lvl.number)) { this.loadLevel(index); return; }
+    this.ui.passwordEntry(lvl.number, (pw) => {
+      if (pw === lvl.password) { this.unlock(lvl.number); this.loadLevel(index); return true; }
+      return false;
+    });
+  }
   togglePause(): void { this.paused = !this.paused; }
   toggleColor(): void { this.colorOn = !this.colorOn; this.renderer.canvas.style.filter = this.colorOn ? '' : 'grayscale(1)'; }
   bestTimesLines(): string[] {
@@ -80,10 +99,14 @@ class Game {
   gotoLevel(level: number | null, password: string): boolean {
     if (password) {
       const idx = this.set.levels.findIndex((l) => l.password === password);
-      if (idx >= 0) { this.loadLevel(idx); return true; }
+      if (idx >= 0) { this.unlock(this.set.levels[idx]!.number); this.loadLevel(idx); return true; }
       return false;
     }
-    if (level && level >= 1 && level <= this.set.levels.length) { this.loadLevel(level - 1); return true; }
+    // A bare level number only works for a level you've already visited.
+    if (level && level >= 1 && level <= this.set.levels.length && this.isVisited(level)) {
+      this.loadLevel(level - 1);
+      return true;
+    }
     return false;
   }
 

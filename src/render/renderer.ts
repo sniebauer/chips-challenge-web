@@ -387,8 +387,9 @@ export class Renderer {
     const ctx = this.ctx;
     const d = ui.dialog!;
     const isGoto = d.kind === 'goto';
-    const w = isGoto ? 250 : 240;
-    const h = isGoto ? 150 : 64 + (d.lines?.length ?? 1) * 15 + 16;
+    const isPw = d.kind === 'password';
+    const w = isGoto ? 250 : isPw ? 320 : 240;
+    const h = isGoto ? 150 : isPw ? 110 : 64 + (d.lines?.length ?? 1) * 15 + 16;
     const x = Math.round((LOGICAL_W - w) / 2);
     const y = Math.round((LOGICAL_H - h) / 2) - 10;
 
@@ -414,6 +415,19 @@ export class Renderer {
       ctx.fillText('or just a password.', x + 14, y + 46);
       this.dialogField(ui, 'Level number:', d.levelField ?? '', d.focus === 'level', x + 14, y + 64, x + w - 90);
       this.dialogField(ui, 'Password:', d.passwordField ?? '', d.focus === 'password', x + 14, y + 86, x + w - 90);
+      this.dialogButton(ui, 'OK', x + w / 2 - 78, y + h - 26, () => ui.confirmDialog());
+      this.dialogButton(ui, 'Cancel', x + w / 2 + 6, y + h - 26, () => { ui.dialog = null; });
+    } else if (isPw) {
+      const label = `Please enter the password for level ${d.passwordLevel}:`;
+      ctx.fillStyle = C_DARK;
+      ctx.fillText(label, x + 14, y + 40);
+      const fw = 60, fy = y + 32;
+      const fx = x + 14 + ctx.measureText(label).width + 10;
+      ctx.fillStyle = '#fff'; ctx.fillRect(fx, fy, fw, 16);
+      bevel(ctx, fx, fy, fw, 16, false, 1);
+      ctx.fillStyle = C_DARK;
+      ctx.fillText((d.passwordField ?? '') + '|', fx + 4, fy + 8);
+      ui.dialogFieldRects.push({ which: 'password', rect: { x: fx, y: fy, w: fw, h: 16 } });
       this.dialogButton(ui, 'OK', x + w / 2 - 78, y + h - 26, () => ui.confirmDialog());
       this.dialogButton(ui, 'Cancel', x + w / 2 + 6, y + h - 26, () => { ui.dialog = null; });
     } else {

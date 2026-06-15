@@ -26,16 +26,18 @@ export interface Rect {
   h: number;
 }
 
-export type DialogKind = 'goto' | 'about' | 'bestTimes' | 'message';
+export type DialogKind = 'goto' | 'password' | 'about' | 'bestTimes' | 'message';
 
 export interface Dialog {
   kind: DialogKind;
   title: string;
   lines?: string[];
-  // Go To fields:
+  // Go To / Password Entry fields:
   levelField?: string;
   passwordField?: string;
   focus?: 'level' | 'password';
+  passwordLevel?: number; // for the Password Entry prompt
+  onPassword?: (pw: string) => boolean; // returns true if accepted
   onOk?: () => void;
 }
 
@@ -123,6 +125,11 @@ export class Ui {
   openGoTo(): void {
     this.closeMenu();
     this.dialog = { kind: 'goto', title: 'Go To Level', levelField: '', passwordField: '', focus: 'password' };
+  }
+  /** Prompt for a level's password (Level > Next/Previous to an unvisited level). */
+  passwordEntry(levelNumber: number, onOk: (pw: string) => boolean): void {
+    this.closeMenu();
+    this.dialog = { kind: 'password', title: 'Password Entry', passwordLevel: levelNumber, passwordField: '', focus: 'password', onPassword: onOk };
   }
   openAbout(): void {
     this.closeMenu();
@@ -223,13 +230,14 @@ export class Ui {
     const d = this.dialog!;
     if (e.key === 'Escape') { this.dialog = null; return true; }
     if (e.key === 'Enter') { this.confirmDialog(); return true; }
-    if (d.kind === 'goto') {
-      if (e.key === 'Tab') { d.focus = d.focus === 'level' ? 'password' : 'level'; return true; }
-      const f = d.focus === 'level' ? 'levelField' : 'passwordField';
+    if (d.kind === 'goto' || d.kind === 'password') {
+      if (d.kind === 'goto' && e.key === 'Tab') { d.focus = d.focus === 'level' ? 'password' : 'level'; return true; }
+      const onLevel = d.kind === 'goto' && d.focus === 'level';
+      const f = onLevel ? 'levelField' : 'passwordField';
       if (e.key === 'Backspace') { d[f] = (d[f] ?? '').slice(0, -1); return true; }
       if (e.key.length === 1) {
-        if (d.focus === 'level' && /[0-9]/.test(e.key) && (d.levelField ?? '').length < 3) d.levelField = (d.levelField ?? '') + e.key;
-        else if (d.focus === 'password' && /[a-zA-Z]/.test(e.key) && (d.passwordField ?? '').length < 4) d.passwordField = (d.passwordField ?? '') + e.key.toUpperCase();
+        if (onLevel && /[0-9]/.test(e.key) && (d.levelField ?? '').length < 3) d.levelField = (d.levelField ?? '') + e.key;
+        else if (!onLevel && /[a-zA-Z]/.test(e.key) && (d.passwordField ?? '').length < 4) d.passwordField = (d.passwordField ?? '') + e.key.toUpperCase();
         return true;
       }
     }
@@ -244,6 +252,12 @@ export class Ui {
       const pw = (d.passwordField ?? '').toUpperCase();
       if (this.a.gotoLevel(lvl, pw)) this.dialog = null;
       else this.message('Go To Level', 'Invalid level or password.');
+      return;
+    }
+    if (d.kind === 'password') {
+      const pw = (d.passwordField ?? '').toUpperCase();
+      if (d.onPassword?.(pw)) this.dialog = null;
+      else this.message('Password Entry', 'Incorrect password.');
       return;
     }
     d.onOk?.();
