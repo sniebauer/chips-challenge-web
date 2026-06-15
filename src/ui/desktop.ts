@@ -59,6 +59,7 @@ export interface UiActions {
   colorOn(): boolean;
   bestTimesLines(): string[];
   openHelp(topicId: string): void;
+  openRepo(): void;
 }
 
 export class Ui {
@@ -90,6 +91,7 @@ export class Ui {
           { label: 'Pause', accel: 0, shortcut: 'F3', checked: a.isPaused(), action: () => a.togglePause() },
           { label: 'Best Times...', accel: 5, action: () => this.openBestTimes() },
           { separator: true },
+          { label: 'View Source on GitHub', accel: 0, action: () => { this.closeMenu(); a.openRepo(); } },
           { label: 'Exit', accel: 1, action: () => this.exit() },
         ],
       },

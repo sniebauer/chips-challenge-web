@@ -189,7 +189,6 @@ async function main(): Promise<void> {
   const renderer = new Renderer(atlas, chrome, font);
   app.appendChild(renderer.canvas);
   const touch = new Touch();
-  document.body.appendChild(touch.element);
 
   const keyboard = new Keyboard();
   const audio = new Audio();
@@ -218,6 +217,7 @@ async function main(): Promise<void> {
     colorOn: () => game.colorOn,
     bestTimesLines: () => game.bestTimesLines(),
     openHelp: (id) => help.show(id),
+    openRepo: () => { window.open('https://github.com/sniebauer/chips-challenge-web', '_blank', 'noopener'); },
   });
   game.setUi(ui);
 

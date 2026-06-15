@@ -36,7 +36,7 @@ export class HelpWindow {
     this.root = document.createElement('div');
     this.root.style.cssText =
       'position:fixed;inset:0;display:none;align-items:center;justify-content:center;' +
-      'background:rgba(0,0,0,0.45);z-index:30;font-family:"MS Sans Serif",Tahoma,system-ui,sans-serif;';
+      "background:rgba(0,0,0,0.45);z-index:30;font-family:'W95FA',\"MS Sans Serif\",Tahoma,system-ui,sans-serif;";
 
     const win = document.createElement('div');
     win.style.cssText =
@@ -57,7 +57,7 @@ export class HelpWindow {
     const mkBtn = (label: string, fn: () => void) => {
       const b = document.createElement('button');
       b.textContent = label;
-      b.style.cssText = 'font:bold 12px "MS Sans Serif",sans-serif;padding:2px 10px;border:2px solid;border-color:#fff #808080 #808080 #fff;background:#c0c0c0;cursor:pointer;';
+      b.style.cssText = "font:bold 12px 'W95FA',\"MS Sans Serif\",sans-serif;padding:2px 10px;border:2px solid;border-color:#fff #808080 #808080 #fff;background:#c0c0c0;cursor:pointer;";
       b.onclick = fn;
       bar.appendChild(b);
       return b;
