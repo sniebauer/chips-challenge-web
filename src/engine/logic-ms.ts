@@ -170,18 +170,17 @@ function tryMoveChip(state: GameState, dir: Direction): boolean {
     }
   }
 
-  // Revealed walls: bumping a hidden/fake wall converts it but blocks the step.
-  if (to === TILE.HIDDEN_WALL_TEMP) {
+  // Bumping a hidden or real blue wall reveals it as a solid wall and blocks the step.
+  if (to === TILE.HIDDEN_WALL_TEMP || to === TILE.BLUEWALL_REAL) {
     state.terrain[toPos] = TILE.WALL;
     return false;
   }
+  // A fake blue wall vanishes and Chip enters it in the same move.
   if (to === TILE.BLUEWALL_FAKE) {
     state.terrain[toPos] = TILE.FLOOR;
-    return false;
-  }
-  if (to === TILE.BLUEWALL_REAL) {
-    state.terrain[toPos] = TILE.WALL;
-    return false;
+    leaveChipTile(state, from);
+    state.chipPos = toPos;
+    return true;
   }
 
   if (!chipCanEnter(state, to)) return false;
@@ -358,14 +357,14 @@ function monsterChoices(state: GameState, mob: Mob): Direction[] {
       return [d, right(d), left(d), back(d)];
     case TILE.BALL_N: // bounce: straight then reverse
       return [d, back(d)];
-    case TILE.WALKER_N: // straight; if blocked pick a random direction
-      return [d];
+    case TILE.WALKER_N: // straight, else the other three in random order
+      return [d, ...shuffle3(state, [left(d), back(d), right(d)])];
     case TILE.TANK_N: // straight only (until reversed by blue button)
       return [d];
     case TILE.TEETH_N: // homes toward Chip
       return teethChoices(state, mob);
-    case TILE.BLOB_N: // random
-      return [state.rng.range(4) as Direction];
+    case TILE.BLOB_N: // all four directions in random order
+      return shuffle4(state, [d, left(d), back(d), right(d)]);
     default:
       return [d];
   }
@@ -379,6 +378,17 @@ function teethChoices(state: GameState, mob: Mob): Direction[] {
   // Prefer the axis with greater distance (MS teeth behavior).
   if (Math.abs(dxv) > Math.abs(dyv)) return dxv !== 0 ? [horiz, vert] : [vert];
   return dyv !== 0 ? [vert, horiz] : [horiz];
+}
+
+function shuffle3(state: GameState, a: Direction[]): Direction[] {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = state.rng.range(i + 1);
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+function shuffle4(state: GameState, a: Direction[]): Direction[] {
+  return shuffle3(state, a);
 }
 
 function moveOneMonster(state: GameState, mob: Mob): void {
@@ -398,6 +408,9 @@ function moveOneMonster(state: GameState, mob: Mob): void {
 
   if (mob.kind === 'block') return; // blocks only move when pushed or sliding
 
+  // Teeth and blobs move at half speed (every other turn).
+  if ((mob.id === TILE.TEETH_N || mob.id === TILE.BLOB_N) && ((state.tick - 1) & 1) !== 0) return;
+
   // Trapped monsters can't move unless their trap is currently open.
   if (state.terrain[mob.pos] === TILE.TRAP && !isTrapOpen(state, mob.pos)) return;
 
@@ -409,11 +422,7 @@ function moveOneMonster(state: GameState, mob: Mob): void {
       return;
     }
   }
-  // Walker/blob that found nothing: keep facing (handled by single-choice lists).
-  if (mob.id === TILE.WALKER_N) {
-    // pick a new random direction for next turn
-    mob.dir = state.rng.range(4) as Direction;
-  }
+  // Nothing available: keep facing the same way (it will retry next turn).
 }
 
 function canStep(state: GameState, mob: Mob, dir: Direction): boolean {
@@ -532,9 +541,7 @@ export const msRuleset: Ruleset = {
       }
     }
 
-    recomputeTraps(state);
-
-    // Tank reversal queued by a blue button.
+    // Tank reversal queued by a blue button on a previous turn.
     if (state.reverseTanks) {
       for (const m of state.mobs) {
         if (!m.dead && m.id === TILE.TANK_N) m.dir = back(m.dir);
@@ -542,8 +549,17 @@ export const msRuleset: Ruleset = {
       state.reverseTanks = false;
     }
 
-    // Move monsters and sliding blocks in order. Snapshot length so clones made
-    // this turn don't also move this turn.
+    // MS order: Chip moves first, then creatures move "at the end of the interval".
+    if (input.dir !== null || slideDir(state, fakeChipMob(state)) !== null) {
+      stepChip(state, input.dir);
+    }
+    if (state.status !== 'playing') return;
+
+    // Buttons Chip just pressed affect this turn's creature moves.
+    recomputeTraps(state);
+
+    // Move monsters and sliding blocks in monster-list order. Snapshot length so
+    // clones made this turn don't also move this turn.
     const count = state.mobs.length;
     for (let i = 0; i < count; i++) {
       const m = state.mobs[i]!;
@@ -556,13 +572,7 @@ export const msRuleset: Ruleset = {
       if (state.status !== 'playing') return;
     }
 
-    // Move Chip.
-    if (input.dir !== null || slideDir(state, fakeChipMob(state)) !== null) {
-      stepChip(state, input.dir);
-    }
-    if (state.status !== 'playing') return;
-
-    // Monster sharing Chip's cell => death.
+    // A creature that moved onto Chip's cell kills him.
     const onChip = mobAt(state, state.chipPos);
     if (onChip && onChip.kind === 'monster') die(state, 'A monster got you!');
 
