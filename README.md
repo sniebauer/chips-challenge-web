@@ -1,5 +1,7 @@
 # Chip's Challenge — Web (MS / Windows edition)
 
+**▶ Play it: [chips-challenge.pages.dev](https://chips-challenge.pages.dev)**
+
 A browser-native, pixel-perfect recreation of the **Windows 3.x version of Chip's
 Challenge**. No VM, no DOS emulator, no recompiled binary — a real reimplementation
 of the MS game engine in TypeScript that runs the original level data (`CHIPS.DAT`,
