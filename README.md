@@ -11,9 +11,15 @@ of the MS game engine in TypeScript that runs the original level data (`CHIPS.DA
   added later behind a toggle.
 - **Stack:** vanilla TypeScript + HTML5 Canvas, built with Vite, shipped as static
   files. The production bundle is ~10 kB gzipped.
+- **Presentation:** the full original Windows 3.1 window is reproduced — blue title
+  bar, Game/Options/Level/Help menu, green circuit-board background, the beveled 9x9
+  viewport, and the INFOWND info panel with green 7-segment LCD displays and the
+  inventory grid (all art extracted from `CHIPS.EXE`).
+- **Audio:** original WAV sound effects, plus the original MIDI music pre-rendered to
+  looping OGG/MP3 at build time (see below).
 - **Controls:** Arrow keys / WASD, on-screen d-pad + swipe on touch, `R` to restart,
-  `P` to enter a level password. Progress (furthest level, best times) is saved to
-  `localStorage`.
+  `P` to enter a level password, `M` to mute. Progress (furthest level, best times)
+  is saved to `localStorage`.
 
 ## Assets / legal note
 
@@ -66,13 +72,39 @@ npm run build     # static site in dist/
 npm run deploy    # build + wrangler pages deploy dist  (Cloudflare Pages)
 ```
 
+## Music (build-time)
+
+The original `chip01.mid` / `chip02.mid` are rendered to small looping OGG (+ MP3
+fallback) once, at build time, with fluidsynth + a GM soundfont — so the browser
+ships no synth or soundfont. The generated `public/music/*.{ogg,mp3}` are committed.
+To regenerate:
+
+```bash
+brew install fluid-synth                 # one-time
+# put a GM soundfont at tools/soundfonts/gm.sf2 (dev-only, gitignored)
+npm run gen-music
+```
+
+## MS-fidelity regression test
+
+`test/tws-regression.test.ts` replays the canonical public CC1 **MS solution set**
+(`assets/solutions/public_chips.dac.tws`, parsed by `src/engine/tws.ts`) through the
+engine and checks each level is solved. It is the objective measure of engine
+accuracy and guards against regressions. Currently the engine solves the early
+lessons and a baseline set of levels; the main remaining gaps are documented below.
+
 ## Status / roadmap
 
 - ✅ DAT parser (all 149 levels, passwords verified against the shipped list)
-- ✅ MS engine: Chip + creatures, items/doors/boots, ice/force, bombs, traps,
-  cloners, toggle walls, teleports, thief; runs all 149 levels without error
-- ✅ Renderer, keyboard + touch input, sound effects, title/password UI, save
-- ⏳ Music: original MIDI files are bundled; in-browser MIDI synthesis is a TODO
-- ⏳ Lynx ruleset toggle
-- ⏳ Broader MS-fidelity regression suite (e.g. validating against `.tws` solutions)
+- ✅ MS engine: Chip + creatures (correct move order, wall-following, half-speed
+  teeth/blobs), items/doors/boots, ice/force, blocks, bombs, traps, cloners, toggle
+  walls, teleports, thief; runs all 149 levels without error
+- ✅ Full Windows 3.1 window chrome + INFOWND panel with LCD displays
+- ✅ Renderer, keyboard + touch input, sound effects + music, title/password UI, save
+- ✅ TWS solution-replay regression harness
+- ⏳ **Sub-turn timing**: ~108 levels use the force-floor override (Chip moves every
+  1/20s tick, not every 1/5s turn). Replaying those exactly needs a 20-ticks/sec
+  engine (creatures every 4th tick) instead of the current fixed 5/sec turn loop.
+- ⏳ **Bit-exact MS PRNG** for deterministic blob/walker/random-force levels.
+- ⏳ Lynx ruleset toggle (the `Ruleset` interface is the seam).
 ```
