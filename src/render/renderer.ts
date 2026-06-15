@@ -387,8 +387,8 @@ export class Renderer {
     const ctx = this.ctx;
     const d = ui.dialog!;
     const isGoto = d.kind === 'goto';
-    const w = isGoto ? 250 : 230;
-    const h = isGoto ? 150 : 110;
+    const w = isGoto ? 250 : 240;
+    const h = isGoto ? 150 : 64 + (d.lines?.length ?? 1) * 15 + 16;
     const x = Math.round((LOGICAL_W - w) / 2);
     const y = Math.round((LOGICAL_H - h) / 2) - 10;
 

@@ -56,6 +56,7 @@ export interface UiActions {
   sfxOn(): boolean;
   colorOn(): boolean;
   bestTimesLines(): string[];
+  openHelp(topicId: string): void;
 }
 
 export class Ui {
@@ -107,10 +108,10 @@ export class Ui {
       },
       {
         label: 'Help', accel: 0, items: [
-          { label: 'Contents', accel: 0, shortcut: 'F1', action: () => this.openAbout() },
-          { label: 'How to Play', accel: 7, action: () => this.openAbout() },
-          { label: 'Commands', accel: 0, action: () => this.openAbout() },
-          { label: 'How to Use Help', accel: 7, action: () => this.openAbout() },
+          { label: 'Contents', accel: 0, shortcut: 'F1', action: () => this.help('chip-s-challenge-help-contents') },
+          { label: 'How to Play', accel: 7, action: () => this.help('how-to-play') },
+          { label: 'Commands', accel: 0, action: () => this.help('commands') },
+          { label: 'How to Use Help', accel: 7, action: () => this.help('chip-s-challenge-help-contents') },
           { separator: true },
           { label: 'About Chip’s Challenge...', accel: 0, action: () => this.openAbout() },
         ],
@@ -127,9 +128,13 @@ export class Ui {
     this.closeMenu();
     this.dialog = {
       kind: 'about', title: 'About Chip’s Challenge',
-      lines: ['Chip’s Challenge', 'Windows edition — web port', '', 'A faithful browser recreation.'],
+      lines: ['Chip’s Challenge', '', 'Chip’s Challenge is a registered trademark', 'of Epyx, Inc. © 1991 Epyx, Inc.', 'All rights reserved.'],
       onOk: () => { this.dialog = null; },
     };
+  }
+  private help(topicId: string): void {
+    this.closeMenu();
+    this.a.openHelp(topicId);
   }
   openBestTimes(): void {
     this.closeMenu();
@@ -207,7 +212,7 @@ export class Ui {
     // global shortcuts
     if (e.key === 'F2') { this.a.newGame(); return true; }
     if (e.key === 'F3') { this.a.togglePause(); return true; }
-    if (e.key === 'F1') { this.openAbout(); return true; }
+    if (e.key === 'F1') { this.a.openHelp('chip-s-challenge-help-contents'); return true; }
     if (e.ctrlKey && (e.key === 'r' || e.key === 'R')) { this.a.restart(); return true; }
     if (e.ctrlKey && (e.key === 'n' || e.key === 'N')) { this.a.next(); return true; }
     if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) { if (this.a.hasPrevious()) this.a.previous(); return true; }

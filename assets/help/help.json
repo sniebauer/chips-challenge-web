@@ -1,0 +1,971 @@
+{
+ "topics": [
+  {
+   "id": "chip-s-challenge-help-contents",
+   "title": "Chip's Challenge Help Contents",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "The Contents lists all Chip's Challenge Help topics."
+    },
+    {
+     "kind": "para",
+     "text": "To learn how to use Help, choose How to Use Help from the Help menu, or press F1."
+    },
+    {
+     "kind": "para",
+     "text": "Click here for copyright information specific to Chip's Challenge."
+    },
+    {
+     "kind": "link",
+     "text": "How to Play",
+     "to": "how-to-play"
+    },
+    {
+     "kind": "link",
+     "text": "Overview",
+     "to": "overview"
+    },
+    {
+     "kind": "link",
+     "text": "Playing the Game",
+     "to": "playing-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Rules of the Game",
+     "to": "rules-of-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Scoring",
+     "to": "scoring"
+    },
+    {
+     "kind": "link",
+     "text": "Strategy and Hints",
+     "to": "strategy-and-hints"
+    },
+    {
+     "kind": "link",
+     "text": "Commands",
+     "to": "commands"
+    },
+    {
+     "kind": "link",
+     "text": "Game Menu Commands",
+     "to": "game-menu-commands"
+    },
+    {
+     "kind": "link",
+     "text": "Options Menu Commands",
+     "to": "options-menu-commands"
+    },
+    {
+     "kind": "link",
+     "text": "Level Menu Commands",
+     "to": "level-menu-commands"
+    }
+   ]
+  },
+  {
+   "id": "overview",
+   "title": "Overview",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "Chip is willing to do anything for Melinda the Mental Marvel, more than anything, because he wants to join Melinda's exclusive computer club, the Bit Busters. Finally Melinda has offered him membership, but on one condition! Chip must find his way from one end of Melinda's magical clubhouse to the other, picking up cosmic computer chips along the way."
+    },
+    {
+     "kind": "para",
+     "text": "If that sounds easy, then you've never been to Melinda's magical clubhouse. It's awesome inside, but tricky, and a little scary too. There are teleports, invisible walls, force floors, water traps, locked doors, and plenty of monsters. There's magic, mystery, and behind the scenes there is Melinda, keeping score on your progress and providing helpful hints."
+    },
+    {
+     "kind": "para",
+     "text": "As you succeed in helping Chip move through each level of the clubhouse, Melinda gives you a secret password that allows you to return. And Melinda rewards perseverance. If she thinks Chip has tried long enough and hard enough on a level, she'll let him sneak through to the next level. But it takes a lot of perseverance to impress her. How big is the clubhouse? 144 levels is the rumor. But some claim that Melinda is still building. In any case, it defies dimensions so don't get lost."
+    },
+    {
+     "kind": "para",
+     "text": "See Also"
+    },
+    {
+     "kind": "link",
+     "text": "Playing the Game",
+     "to": "playing-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Rules of the Game",
+     "to": "rules-of-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Scoring",
+     "to": "scoring"
+    },
+    {
+     "kind": "link",
+     "text": "Strategy and Hints",
+     "to": "strategy-and-hints"
+    }
+   ]
+  },
+  {
+   "id": "playing-the-game",
+   "title": "Playing the Game",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "The object of Chip's Challenge is to help heroic Chip find all the computer chips he needs on one level so that he can plug into the cosmic computer socket and pass through the exit square to the next level. Along the way you've got to keep Chip safe from the many dangers of Melinda's magical clubhouse. Your job is to help him find the tools he'll need to unlock doors, walk through fire, bridge water, avoid bombs, and find the correct paths. Use the arrow keys on the numeric keypad or the mouse to move Chip around the magical clubhouse. Each time you move Chip to a square with a tool on it, the tool becomes Chip's ally. For instance, when you move Chip to a square with a blue key on it, he can use the key to pass through a blue door."
+    },
+    {
+     "kind": "para",
+     "text": "The screen is divided into two windows: the Action window and the Information window. The Action window is the inside of Melinda's magical clubhouse, where you play the game. The Information window, located to the right of the action window, has four displays."
+    },
+    {
+     "kind": "bullet",
+     "text": "The Level display shows the game level."
+    },
+    {
+     "kind": "bullet",
+     "text": "The Time display is a countdown clock to remind you how much time remains. There is a time limit for most game levels. The more complicated the level, the more  time you are allotted. The less time you use, the higher your score."
+    },
+    {
+     "kind": "bullet",
+     "text": "The Chips Left display shows how many chips you need to find before you can pass to the next level. Watch this display, as you don't always need to collect every chip on a level. On some levels you don't even have to collect any chips, which means your big challenge is to just get out alive."
+    },
+    {
+     "kind": "bullet",
+     "text": "The inventory box, below the Chips Left display, holds the tools you've picked up, such as keys, shoes, skates, and so on, to help Chip make it to the next level."
+    },
+    {
+     "kind": "bullet",
+     "text": "A hint box is displayed when you move Chip to a square with a question mark on it. The hint box provides suggestions on how to make it through each level, from level 1 to level 8. Beyond the eighth level, however, only occasional hints are given."
+    },
+    {
+     "kind": "para",
+     "text": "To start a new game"
+    },
+    {
+     "kind": "bullet",
+     "text": "From the Game menu, choose New Game, or press F2."
+    },
+    {
+     "kind": "para",
+     "text": "Note:  When you choose the New Game command, it returns you to level 1, resets your score to zero, and erases all your passwords."
+    },
+    {
+     "kind": "para",
+     "text": "To restart an existing game"
+    },
+    {
+     "kind": "bullet",
+     "text": "If you restart Chip's Challenge after a short or long break, all you have to do is press the arrow keys or click the mouse and Chip is back in action. Melinda remembers your score and all your passwords."
+    },
+    {
+     "kind": "para",
+     "text": "Note:  Be sure not to choose the New Game command to restart an existing game or all your past achievements are lost."
+    },
+    {
+     "kind": "para",
+     "text": "To move Chip"
+    },
+    {
+     "kind": "bullet",
+     "text": "On the numeric keypad, press the UP ARROW, DOWN ARROW, LEFT ARROW, OR RIGHT ARROW."
+    },
+    {
+     "kind": "para",
+     "text": "You can also use the mouse. Just click the square you want Chip to go to, no matter how close or far away."
+    },
+    {
+     "kind": "para",
+     "text": "To get a hint"
+    },
+    {
+     "kind": "bullet",
+     "text": "Move Chip to the question mark square."
+    },
+    {
+     "kind": "para",
+     "text": "Hints are given during the first eight levels, and only occasionally on subsequent levels."
+    },
+    {
+     "kind": "para",
+     "text": "To pause a game"
+    },
+    {
+     "kind": "bullet",
+     "text": "From the Game menu, choose Pause, or press F3."
+    },
+    {
+     "kind": "para",
+     "text": "When the game is paused, the countdown clock stops. But to make life tougher for Chip, the playing surface is covered. To resume play, choose Pause or press F3 again."
+    },
+    {
+     "kind": "para",
+     "text": "To restart play on the same level"
+    },
+    {
+     "kind": "bullet",
+     "text": "From the Level menu, choose Restart, or press CTRL+R."
+    },
+    {
+     "kind": "para",
+     "text": "To go to the next level"
+    },
+    {
+     "kind": "bullet",
+     "text": "From the Level menu, choose Next, or press CTRL+N."
+    },
+    {
+     "kind": "para",
+     "text": "If you have not already visited this level, you must give the password."
+    },
+    {
+     "kind": "para",
+     "text": "To go to the previous level"
+    },
+    {
+     "kind": "bullet",
+     "text": "From the Level menu, choose Previous, or press CTRL+P."
+    },
+    {
+     "kind": "para",
+     "text": "To go to a specific level"
+    },
+    {
+     "kind": "para",
+     "text": "1 From the Level menu, choose Go To."
+    },
+    {
+     "kind": "para",
+     "text": "The Go To Level dialog box is displayed."
+    },
+    {
+     "kind": "para",
+     "text": "2 Type the number of the level you want to go to and its password."
+    },
+    {
+     "kind": "para",
+     "text": "The password for a level is displayed when you begin that level. If you have already visited a level, you can omit the password. If you know the password, you can omit the level number."
+    },
+    {
+     "kind": "para",
+     "text": "See Also"
+    },
+    {
+     "kind": "link",
+     "text": "Rules of the Game",
+     "to": "rules-of-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Scoring",
+     "to": "scoring"
+    },
+    {
+     "kind": "link",
+     "text": "Strategy and Hints",
+     "to": "strategy-and-hints"
+    },
+    {
+     "kind": "link",
+     "text": "Overview",
+     "to": "overview"
+    }
+   ]
+  },
+  {
+   "id": "rules-of-the-game",
+   "title": "Rules of the Game",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "Chip's Challenge has one rule at its core: You have to get Chip through a level of play before the countdown clock or poor Chip expires."
+    },
+    {
+     "kind": "bullet",
+     "text": "To complete a level of play, Chip must first collect the required number of computer chips (as indicated on the Chips Left display in the lower right of the Information window). Only at this point may he plug himself in to the cosmic chip socket, and pass through the exit square. But Chip's life is not an easy one, and sometimes there are obstacles even between the cosmic chip socket and the exit square."
+    },
+    {
+     "kind": "bullet",
+     "text": "Unfortunately, Chip is a fragile fellow and just about anything, from a paramecium, to a bug, to a blob, can kill him if he steps too near. Also of fatal concern are the tanks, fire balls, bombs, ice sheets, and bear traps that Melinda has left lying around her clubhouse. Only one death per level is allowed. Fortunately, Chip is a persistent fellow. If killed on one level, he tries again."
+    },
+    {
+     "kind": "para",
+     "text": "Melinda doesn't mean for her clubhouse to be so dangerous. It's just that she's such a mental marvel that she's always inventing things and then leaving them around. And then there's that African bug collection that got loose, and the paramecium experiment that produced unexpected results. Such things don't faze Melinda, who is preoccupied in the upper levels, creating mental models to test Hawking equations on the origin of the universe. But, Poor Chip! Here's a list of some of the obstacles he's going to face."
+    },
+    {
+     "kind": "para",
+     "text": "Obstacles and Traps"
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm3",
+     "text": "Walls form the boundaries of the clubhouse mazes."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm4",
+     "text": "Thin walls are impassable panels between squares."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm5",
+     "text": "Blue walls may or may not be real."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm40",
+     "text": "Invisible walls may or may not become visible when touched."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm6",
+     "text": "Recessed walls pop out of the floor when Chip steps on them (but they are one of the few surprises that aren't fatal)."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm7",
+     "text": "Chip needs a key of the same color before he can enter any colored door."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm8",
+     "text": "Toggle walls open and close when Chip presses a green button."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm9",
+     "text": "Bear traps catch anything that steps on them but can be held open by a brown button."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm10",
+     "text": "Bombs explode on contact. Use a block or monster for this job."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm11",
+     "text": "Force floors are moving sidewalks that carry Chip away unless he uses suction shoes."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm12",
+     "text": "Fire burns unless Chip uses fire boots."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm13",
+     "text": "Water is sure death in the depths unless Chip uses flippers."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm23",
+     "text": "Ice makes Chip slide out of control unless he wears ice skates."
+    },
+    {
+     "kind": "para",
+     "text": "Movers and Monsters"
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm14",
+     "text": "Blobs squish whatever or whomever crosses their path."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm15",
+     "text": "Pink balls bounce back when they hit any object."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm16",
+     "text": "Bugs follow the left wall and are fatal if they collide with Chip."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm17",
+     "text": "Fireballs turn right when they hit any object."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm18",
+     "text": "Gliders turn left when they hit any object."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm19",
+     "text": "Paramecia follow the right wall."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm20",
+     "text": "Tanks stop when they hit any object and reverse when Chip presses a blue button."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm21",
+     "text": "Teeth chase you, chattering all the way."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm41",
+     "text": "Walkers turn in a random direction when they hit any object."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm22",
+     "text": "The spy steals your suction shoes, ice skates, fire boots, and flippers."
+    },
+    {
+     "kind": "para",
+     "text": "Tools"
+    },
+    {
+     "kind": "para",
+     "text": "Fortunately for Chip, Melinda creates benevolent inventions too. Her super tools will get Chip out of many a stressful situation. They include:"
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm25",
+     "text": "Question marks provide hints, but the clock ticks while Chip is reading."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm26",
+     "text": "Colored keys open doors of the same color. Green keys can be used more than once."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm27",
+     "text": "Dirt stops the monsters, but turns to floor when Chip steps on it."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm28",
+     "text": "Gravel blocks the monsters. Only Chip can step on it."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm29",
+     "text": "Blocks help Chip to cross water. Be sure to have Chip walk on each block (to pack it down) before pushing another into the water. They're also great for detonating bombs and holding open bear traps."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm33",
+     "text": "Flippers allow Chip to swim through water."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm34",
+     "text": "Ice skates allow Chip to skate across ice."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm35",
+     "text": "Fire boots allow Chip to walk through fire."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm36",
+     "text": "Suction shoes keep Chip from being carried away on force floors."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm38",
+     "text": "Teleports zap Chip to another teleport. If Chip enters a teleport from different directions he may go to different places."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm37",
+     "text": "Clone machines duplicate whatever is on them. Each time anything pushes the clone machine's red button, one duplicate item is created."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm30",
+     "text": "Red buttons trigger the clone machine. Chip isn't the only one who can trigger them. Bugs, fireballs, and bouncing balls can too."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm31",
+     "text": "Blue buttons cause all tanks to reverse direction."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm32",
+     "text": "Green buttons open and close all toggle walls."
+    },
+    {
+     "kind": "gloss",
+     "icon": "bm39",
+     "text": "Brown buttons hold one bear trap open."
+    },
+    {
+     "kind": "para",
+     "text": "See Also"
+    },
+    {
+     "kind": "link",
+     "text": "Scoring",
+     "to": "scoring"
+    },
+    {
+     "kind": "link",
+     "text": "Strategy and Hints",
+     "to": "strategy-and-hints"
+    },
+    {
+     "kind": "link",
+     "text": "Overview",
+     "to": "overview"
+    },
+    {
+     "kind": "link",
+     "text": "Playing the Game",
+     "to": "playing-the-game"
+    }
+   ]
+  },
+  {
+   "id": "scoring",
+   "title": "Scoring",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "Chip is the kind of guy who really doesn't need much more than a pat on the back. In fact, Chip is the kind of guy who really doesn't get much more than a pat on the back. But, for those who insist on keeping score, here are the basics:"
+    },
+    {
+     "kind": "bullet",
+     "text": "Time bonus: When you complete a level, you receive 10 points for every second left on the countdown clock. A few of the higher levels aren't timed, so you don't receive a time bonus for completing them."
+    },
+    {
+     "kind": "bullet",
+     "text": "Level bonus: When you complete a level you always receive 500 points. This is multiplied by the level number you have just completed. For example, upon completing level 7, you receive 3,500 level bonus points. However, each time Chip dies, or restarts, the level bonus is decreased by 20 percent."
+    },
+    {
+     "kind": "bullet",
+     "text": "Level score: When you complete a level, your time bonus and level bonus are computed and then added together to create your level score."
+    },
+    {
+     "kind": "bullet",
+     "text": "Total score: The total score is the sum of your scores for all levels."
+    },
+    {
+     "kind": "para",
+     "text": "To see the best times and points awarded for each level"
+    },
+    {
+     "kind": "bullet",
+     "text": "From the Game menu, choose Best Times."
+    },
+    {
+     "kind": "para",
+     "text": "See Also"
+    },
+    {
+     "kind": "link",
+     "text": "Strategy and Hints",
+     "to": "strategy-and-hints"
+    },
+    {
+     "kind": "link",
+     "text": "Overview",
+     "to": "overview"
+    },
+    {
+     "kind": "link",
+     "text": "Playing the Game",
+     "to": "playing-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Rules of the Game",
+     "to": "rules-of-the-game"
+    }
+   ]
+  },
+  {
+   "id": "strategy-and-hints",
+   "title": "Strategy and Hints",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "This section contains helpful hints for playing Chip's Challenge successfully."
+    },
+    {
+     "kind": "bullet",
+     "text": "The countdown clock keeps running while you and Chip read the clues."
+    },
+    {
+     "kind": "bullet",
+     "text": "Pay attention to the Chips Left display in the Information window. Chip may not need to pick up all the chips on a level."
+    },
+    {
+     "kind": "bullet",
+     "text": "Chip can shove blocks into water one at a time so he can cross to the other side. He'll need to walk on each block (to pack it down) before shoving another one over it."
+    },
+    {
+     "kind": "bullet",
+     "text": "When Chip steps on dirt to turn it to floor, it opens the way for bugs, blobs, and other monsters."
+    },
+    {
+     "kind": "bullet",
+     "text": "Green keys can be used more than once."
+    },
+    {
+     "kind": "bullet",
+     "text": "Chip can step off force floors sideways."
+    },
+    {
+     "kind": "bullet",
+     "text": "If Chip enters a teleport from different directions he may go to different places."
+    },
+    {
+     "kind": "bullet",
+     "text": "Watch for predictable patterns in the movement of the monsters."
+    },
+    {
+     "kind": "bullet",
+     "text": "Timing is crucial on some levels. Choose Pause from the Game menu, or press F3, to give yourself a moment to think before you move on."
+    },
+    {
+     "kind": "bullet",
+     "text": "Be an explorer: take notes and draw diagrams as you and Chip try to conquer the more difficult levels."
+    },
+    {
+     "kind": "bullet",
+     "text": "If the obvious solution doesn't work, try a creative solution."
+    },
+    {
+     "kind": "bullet",
+     "text": "If a creative solution doesn't work, and Chip is caught in an impossible situation, choose Restart from the Level menu, or press CTRL+R."
+    },
+    {
+     "kind": "bullet",
+     "text": "Don't give up! Melinda admires perseverance. If you work long enough and hard enough on a level and still don't succeed, Melinda might just intervene and give Chip the option of skipping to the next level."
+    },
+    {
+     "kind": "bullet",
+     "text": "Write your passwords down on a piece of paper for future reference. This can be helpful especially when others play on your computer. For example, if you make it to level 133, go to bed, and someone else starts up Chip's Challenge and chooses New Game from the Game menu: All your brilliant progress is lost, unless you remember your passwords."
+    },
+    {
+     "kind": "bullet",
+     "text": "Special dispatches from Melinda:"
+    },
+    {
+     "kind": "para",
+     "text": "Level 9 \"NUTS AND BOLTS\": Dear Chip, In order to outsmart the spies, I built a secret wall panel, but I can't remember where I put it. I also added a lot of anti-spy bombs. If you come across any, detonate them with blocks. Blocks are also great for holding open bear traps. Sincerely, Melinda."
+    },
+    {
+     "kind": "para",
+     "text": "Level 15 \"ELEMENTARY\": Dear Chip, This level reminds me of my elementary school days when I experienced the burning fires of passion to learn, the keys to wisdom, and the bombs and bear traps of my first social encounters. Just remember that blocks come through again in the end. Reminiscently, Melinda."
+    },
+    {
+     "kind": "para",
+     "text": "Level 23 \"BLOBNET\": Dear Chip, Sorry about all the green blobs. They came from a genetics experiment that didn't quite go right. I walled off this lab quite some time ago, and wouldn't dream of asking you to go in, except that I left 88 chips there. This level requires patience, good timing, patience, and patience. Patiently, Melinda."
+    },
+    {
+     "kind": "para",
+     "text": "Level 26 \"CHCHCHIPS\": Dear Chip, I stutter with excitement when I think of the 170 chips I left in this area! Timing is important. You'll no doubt run across, or be run over by, my pet paramecium. He's been all alone in the lab for too long. You'll have to move fast to snatch the last chip away from him. I expect you might be trampled a few times, but believe me, Chip, it can be done! Apologetically, Melinda"
+    },
+    {
+     "kind": "para",
+     "text": "Level 34 \"CYPHER\": Dear Chip, In some ways this will be the most important level for you. So, cypher, Chip, cypher! Secretly, Melinda."
+    },
+    {
+     "kind": "para",
+     "text": "Level 39 \"GLUT\": Dear Chip, If only we lived in a more perfect world. The bad news is I posted 12 terrible monsters here to guard my chips from spies! But the good news is you only have to make one of them chase you. My advice: Be ready to run and know where you're running to. I hope the monsters don't kill you too many times. Hopefully Yours, Melinda"
+    },
+    {
+     "kind": "para",
+     "text": "Level 131 \"TOTALLY UNFAIR\": Dear Chip, This level will seem more fair if you take the time to read the hint. This is a level that could become totally fair! In the meantime, Chip, it's important for you to know that when you get caught in those bear traps, it causes me pain, too! Commiseratingly Yours, Melinda"
+    },
+    {
+     "kind": "para",
+     "text": "Level 133 \"BLOB DANCE\": Dear Chip, Yes, I returned to my genetic engineering even after having sworn it off. Once again things have gotten out of control. I wouldn't ask anyone but you, Chip, to go in there. There is no time limit for this level, so learn from your mistakes and have patience and perseverance. Loyally, Melinda."
+    },
+    {
+     "kind": "para",
+     "text": "Level XXX \"FORCE FIELD\": Dear Chip, This level is so high that it officially doesn't exist, so I can't even tell you its number. But, toward the very end of your journey you might come upon my Force Field laboratory. Slide around and get a feel for how to best get to where you want to go. You'll have to be quick when you transfer from one force field direction to another, but remember there is no time limit. Forcefully, Melinda."
+    },
+    {
+     "kind": "para",
+     "text": "See Also"
+    },
+    {
+     "kind": "link",
+     "text": "Overview",
+     "to": "overview"
+    },
+    {
+     "kind": "link",
+     "text": "Playing the Game",
+     "to": "playing-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Rules of the Game",
+     "to": "rules-of-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Scoring",
+     "to": "scoring"
+    }
+   ]
+  },
+  {
+   "id": "how-to-play",
+   "title": "How to Play",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "This section contains information on how to play Chip's Challenge."
+    },
+    {
+     "kind": "link",
+     "text": "Overview",
+     "to": "overview"
+    },
+    {
+     "kind": "link",
+     "text": "Playing the Game",
+     "to": "playing-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Rules of the Game",
+     "to": "rules-of-the-game"
+    },
+    {
+     "kind": "link",
+     "text": "Scoring",
+     "to": "scoring"
+    },
+    {
+     "kind": "link",
+     "text": "Strategy and Hints",
+     "to": "strategy-and-hints"
+    }
+   ]
+  },
+  {
+   "id": "commands",
+   "title": "Commands",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "This section contains information about commands in Chip's Challenge."
+    },
+    {
+     "kind": "link",
+     "text": "Game Menu Commands",
+     "to": "game-menu-commands"
+    },
+    {
+     "kind": "link",
+     "text": "Options Menu Commands",
+     "to": "options-menu-commands"
+    },
+    {
+     "kind": "link",
+     "text": "Level Menu Commands",
+     "to": "level-menu-commands"
+    }
+   ]
+  },
+  {
+   "id": "game-menu-commands",
+   "title": "Game Menu Commands",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "This section contains information about Game menu commands in Chip's Challenge."
+    },
+    {
+     "kind": "para",
+     "text": "New Game"
+    },
+    {
+     "kind": "para",
+     "text": "Starts a new game."
+    },
+    {
+     "kind": "para",
+     "text": "Pause"
+    },
+    {
+     "kind": "para",
+     "text": "Stops the countdown clock and pauses the game. Covers the board so that you can't cheat."
+    },
+    {
+     "kind": "para",
+     "text": "To resume play, choose Pause again, or press F3."
+    },
+    {
+     "kind": "para",
+     "text": "Best Times"
+    },
+    {
+     "kind": "para",
+     "text": "Displays the best times and the most points for each level."
+    },
+    {
+     "kind": "para",
+     "text": "Exit"
+    },
+    {
+     "kind": "para",
+     "text": "Quits Chip's Challenge. You can quit at any time, even in the middle of a game."
+    },
+    {
+     "kind": "para",
+     "text": "The next time you play, you begin on the level where you left off. Just press the arrow keys or click the mouse and Chip is back in action."
+    },
+    {
+     "kind": "para",
+     "text": "Note:  Be sure not to choose New Game from the Game menu or you'll have to begin all over again on level 1."
+    }
+   ]
+  },
+  {
+   "id": "options-menu-commands",
+   "title": "Options Menu Commands",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "This section contains information about the Options menu commands in Chip's Challenge."
+    },
+    {
+     "kind": "para",
+     "text": "Background Music"
+    },
+    {
+     "kind": "para",
+     "text": "Turns the background music on and off."
+    },
+    {
+     "kind": "para",
+     "text": "A check mark is displayed next to the command name when the background music is turned on."
+    },
+    {
+     "kind": "para",
+     "text": "Note:  You need a sound card and a MIDI driver within your computer to play background music. For help with MIDI drivers or other sound-related questions, refer to the manual that came with your sound board, or contact the manufacturer of your sound board."
+    },
+    {
+     "kind": "para",
+     "text": "Sound Effects"
+    },
+    {
+     "kind": "para",
+     "text": "Turns the sound effects on and off."
+    },
+    {
+     "kind": "para",
+     "text": "A check mark is displayed next to the command name when the sound effects are turned on."
+    },
+    {
+     "kind": "para",
+     "text": "Note:  You need a sound card and a sound driver to hear sound effects."
+    },
+    {
+     "kind": "para",
+     "text": "Color"
+    },
+    {
+     "kind": "para",
+     "text": "Offers the choice between a black-and-white or color display."
+    },
+    {
+     "kind": "para",
+     "text": "A check mark is displayed next to the command name when color is turned on."
+    }
+   ]
+  },
+  {
+   "id": "level-menu-commands",
+   "title": "Level Menu Commands",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "This section contains information about the Level menu commands in Chip's Challenge."
+    },
+    {
+     "kind": "para",
+     "text": "Restart"
+    },
+    {
+     "kind": "para",
+     "text": "Restarts play on the current level. You can also press CTRL+R to restart."
+    },
+    {
+     "kind": "para",
+     "text": "Next"
+    },
+    {
+     "kind": "para",
+     "text": "Advances Chip to the next level. You can also press CTRL+N to move to the next level."
+    },
+    {
+     "kind": "para",
+     "text": "Previous"
+    },
+    {
+     "kind": "para",
+     "text": "Sends Chip back to the previous level. You can also press CTRL+P to move to the previous level."
+    },
+    {
+     "kind": "para",
+     "text": "Go To"
+    },
+    {
+     "kind": "para",
+     "text": "Moves Chip to a specified level."
+    },
+    {
+     "kind": "para",
+     "text": "The Go To Level dialog box is displayed, where you can type in the number of the level you want to go to and its password. The password for a level is shown when you begin that level. You can only use the Go To command to return to a level you have already visited."
+    }
+   ]
+  },
+  {
+   "id": "exit-square",
+   "title": "exit square",
+   "blocks": [
+    {
+     "kind": "icon",
+     "icon": "bm24",
+     "text": ""
+    },
+    {
+     "kind": "para",
+     "text": "On the lower levels, the exit square is located adjacent to the cosmic socket square. On higher levels there can be yet more obstacles between the socket square and the exit square."
+    }
+   ]
+  },
+  {
+   "id": "copyright-information",
+   "title": "copyright information",
+   "blocks": [
+    {
+     "kind": "para",
+     "text": "Chip's Challenge is a registered trademark of Epyx, Inc. Chip's Challenge is licensed from Epyx, Inc. © 1991 Epyx, Inc. All rights reserved."
+    }
+   ]
+  }
+ ],
+ "titleByNum": {
+  "17": "Overview",
+  "18": "Playing the Game",
+  "19": "Rules of the Game",
+  "20": "Scoring",
+  "21": "Strategy and Hints",
+  "24": "Game Menu Commands",
+  "25": "Options Menu Commands",
+  "26": "Level Menu Commands",
+  "27": "and pass through the exit square",
+  "28": "Click here for copyright information"
+ }
+}

@@ -13,6 +13,7 @@ import { Audio } from './audio/sfx';
 import { Music } from './audio/music';
 import { loadSave, writeSave, recordWin, type SaveData } from './ui/save';
 import { Ui } from './ui/desktop';
+import { HelpWindow } from './ui/help';
 
 const TICK_MS = 1000 / msRuleset.ticksPerSecond;
 
@@ -25,6 +26,7 @@ class Game {
   private last = 0;
   private winAt = 0;
   private ui!: Ui;
+  private help!: HelpWindow;
   save: SaveData;
 
   constructor(
@@ -42,6 +44,10 @@ class Game {
   setUi(ui: Ui): void {
     this.ui = ui;
     ui.levelStart = { title: this.state.level.title, password: this.state.level.password };
+  }
+
+  setHelp(help: HelpWindow): void {
+    this.help = help;
   }
 
   private loadLevel(index: number): void {
@@ -95,8 +101,8 @@ class Game {
     const dt = Math.min(now - this.last, 250);
     this.last = now;
 
-    // Frozen while a dialog or menu is open, or paused.
-    if (this.ui.blocking || this.ui.openMenu !== null || this.paused) {
+    // Frozen while a dialog, menu, or the Help window is open, or paused.
+    if (this.ui.blocking || this.ui.openMenu !== null || this.paused || this.help.isOpen()) {
       this.acc = 0;
       return;
     }
@@ -164,6 +170,9 @@ async function main(): Promise<void> {
   const game = new Game(set, renderer, keyboard, touch, audio, music);
   (window as unknown as { __game: Game }).__game = game;
 
+  const help = new HelpWindow(() => {});
+  game.setHelp(help);
+
   const ui = new Ui({
     newGame: () => game.newGame(),
     restart: () => game.restart(),
@@ -180,6 +189,7 @@ async function main(): Promise<void> {
     sfxOn: () => !audio.muted,
     colorOn: () => game.colorOn,
     bestTimesLines: () => game.bestTimesLines(),
+    openHelp: (id) => help.show(id),
   });
   game.setUi(ui);
 
