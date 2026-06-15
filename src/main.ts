@@ -5,7 +5,7 @@ import datUrl from '../assets/levels/CHIPS.DAT?url';
 import { parseDat, type LevelSet } from './engine/dat';
 import { initState, type GameState } from './engine/state';
 import { msRuleset } from './engine/logic-ms';
-import { loadAtlas, loadChrome } from './render/atlas';
+import { loadAtlas, loadChrome, loadFont } from './render/atlas';
 import { Renderer, LOGICAL_W, LOGICAL_H } from './render/renderer';
 import { Keyboard } from './input/keyboard';
 import { Touch } from './input/touch';
@@ -142,9 +142,10 @@ class Game {
     this.acc += dt;
     while (this.acc >= TICK_MS && this.status() === 'playing') {
       const dir = this.keyboard.current() ?? this.touch.current();
-      // A new level is frozen on its password popup until the first move.
+      // A new level is frozen on its password popup until the first move (a
+      // keyboard/touch move OR a click-to-walk goal both count as that move).
       if (this.ui.levelStart) {
-        if (dir === null) { this.acc = 0; break; }
+        if (dir === null && this.state.mouseGoal < 0) { this.acc = 0; break; }
         this.ui.levelStart = null;
       }
       this.acc -= TICK_MS;
@@ -176,14 +177,15 @@ class Game {
 
 async function main(): Promise<void> {
   const app = document.getElementById('app')!;
-  const [atlas, chrome, datBuf] = await Promise.all([
+  const [atlas, chrome, font, datBuf] = await Promise.all([
     loadAtlas(),
     loadChrome(),
+    loadFont(),
     fetch(datUrl).then((r) => r.arrayBuffer()),
   ]);
   const set = parseDat(new Uint8Array(datBuf));
 
-  const renderer = new Renderer(atlas, chrome);
+  const renderer = new Renderer(atlas, chrome, font);
   app.appendChild(renderer.canvas);
   const touch = new Touch();
   document.body.appendChild(touch.element);
@@ -236,7 +238,15 @@ async function main(): Promise<void> {
   };
   renderer.canvas.addEventListener('pointerdown', (e) => {
     const { x, y } = toLogical(e);
-    if (ui.pointerDown(x, y)) e.preventDefault();
+    if (ui.pointerDown(x, y)) { e.preventDefault(); return; }
+    // Mouse-walk: a left click on the live board sets a goal Chip walks toward.
+    if (e.button !== 0) return;
+    if (game.paused || ui.openMenu !== null || ui.blocking || help.isOpen()) return;
+    if (game.state.status !== 'playing') return;
+    const cell = renderer.viewportCellAt(game.state, x, y);
+    if (cell < 0) return; // click landed on the panel / frame / margins
+    game.state.mouseGoal = cell === game.state.chip.pos ? -1 : cell;
+    e.preventDefault();
   });
   renderer.canvas.addEventListener('pointermove', (e) => {
     const { x, y } = toLogical(e);

@@ -426,6 +426,32 @@ function teethChoices(state: GameState, mob: Mob): Direction[] {
 }
 
 // --- Chip move choice ---
+
+/**
+ * Mouse-walk (port of mslogic.c chipmovetogoalpos): a greedy one-step toward
+ * state.mouseGoal — compare |dx| vs |dy|, step the dominant axis (tie keeps
+ * vertical), and only if both axes are nonzero fall back to the other axis when
+ * the dominant step is illegal (no recheck). NOT pathfinding: Chip can bump a
+ * wall and stop, exactly like the original.
+ */
+function chipMoveToGoal(state: GameState): Direction | null {
+  const goal = state.mouseGoal;
+  if (goal < 0) return null;
+  const chip = state.chip;
+  if (goal === chip.pos) { state.mouseGoal = -1; return null; }
+  let y = ty(goal) - ty(chip.pos);
+  let x = tx(goal) - tx(chip.pos);
+  let d1: Direction | null = y < 0 ? Dir.N : y > 0 ? Dir.S : null; if (y < 0) y = -y;
+  let d2: Direction | null = x < 0 ? Dir.W : x > 0 ? Dir.E : null; if (x < 0) x = -x;
+  if (x > y) { const t = d1; d1 = d2; d2 = t; } // |dx|>|dy| -> dominant axis is d1
+  if (d1 !== null && d2 !== null) {
+    // Probe d1 side-effect-free: this port's canMakeMove pushes blocks / exposes
+    // hidden walls, and the actual move does that once — so the probe must not.
+    return canMakeMove(state, chip, d1, CMM_NOPUSHING | CMM_NOEXPOSEWALLS) ? d1 : d2;
+  }
+  return d2 === null ? d1 : d2;
+}
+
 function chooseChipMove(state: GameState, input: Direction | null, discard: boolean): void {
   const chip = state.chip;
   chip.tdir = null;
@@ -433,6 +459,8 @@ function chooseChipMove(state: GameState, input: Direction | null, discard: bool
   if (chip.state & CS_HASMOVED) return;
   let dir = input;
   if (discard || ((chip.state & CS_SLIDE) && dir === chip.dir)) return;
+  // No keyboard/touch input this move window: follow the mouse-walk goal if any.
+  if (dir === null && state.mouseGoal >= 0) dir = chipMoveToGoal(state);
   chip.tdir = dir;
 }
 
@@ -469,6 +497,9 @@ export const msRuleset: Ruleset = {
   advanceTick(state: GameState, input: MoveInput): void {
     if (state.status !== 'playing') return;
 
+    // A real keyboard/touch move cancels any pending mouse-walk goal (faithful MS).
+    if (input.dir !== null && state.mouseGoal >= 0) state.mouseGoal = -1;
+
     initialHousekeeping(state);
     recomputeTraps(state);
 
@@ -498,12 +529,17 @@ export const msRuleset: Ruleset = {
 
     // Chip moves every tick (cadence-gated internally)
     const chip = state.chip;
+    const goalMove = input.dir === null && state.mouseGoal >= 0;
+    const posBefore = chip.pos;
     chooseChipMove(state, input.dir, (chip.state & CS_SLIP) !== 0);
     if (chip.tdir !== null) {
       advanceCreature(state, chip, chip.tdir);
       chip.state |= CS_HASMOVED;
       if (state.status !== 'playing') return;
     }
+    // A mouse-walk that attempted a step but didn't budge has bumped a wall: stop
+    // (and go quiet) rather than bumping toward an unreachable goal forever.
+    if (goalMove && chip.tdir !== null && chip.pos === posBefore) state.mouseGoal = -1;
     updateSlipList(state);
 
     // createclones: freshly cloned creatures become eligible to move next tick.

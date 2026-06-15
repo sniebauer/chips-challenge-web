@@ -5,7 +5,7 @@
 
 import { type GameState, MAP_W, MAP_H, tx, ty } from '../engine/state';
 import { TILE } from '../engine/tiles';
-import { type Atlas, type Chrome, srcOf, overlaySrcOf, TILE_PX } from './atlas';
+import { type Atlas, type Chrome, type BitmapFont, FONT_WHITE, FONT_YELLOW, srcOf, overlaySrcOf, TILE_PX } from './atlas';
 import type { Ui } from '../ui/desktop';
 
 // --- layout (logical pixels) ---
@@ -40,7 +40,15 @@ const C_SHADOW = '#808080';
 const C_DARK = '#000000';
 const C_TITLE = '#000080';
 const C_GRAY_TEXT = '#808080';
+const C_HILITE_TEXT = '#ffffff'; // selected menu text (Win95)
 const MENU_FONT = '11px Tahoma, "MS Sans Serif", sans-serif';
+
+// Win95 dropdown metrics.
+const DROP_ROW_H = 18;
+const DROP_SEP_H = 7;
+const DROP_GUTTER = 22; // left checkmark gutter
+const DROP_GAP = 24; // label -> shortcut gap
+const DROP_PAD_R = 16; // right padding after the shortcut column
 
 // LCD digit strip metrics (digits.png is 17x552). 24 cells, 23px pitch, 21px tall;
 // cells 0-11 = yellow set, 12-23 = green set. Within a set: offset 0=dash, 1=dim ghost,
@@ -66,7 +74,7 @@ export class Renderer {
   private ctx: CanvasRenderingContext2D;
   private bgPattern: CanvasPattern | null = null;
 
-  constructor(private atlas: Atlas, private chrome: Chrome) {
+  constructor(private atlas: Atlas, private chrome: Chrome, private font: BitmapFont) {
     this.canvas = document.createElement('canvas');
     this.canvas.width = LOGICAL_W;
     this.canvas.height = LOGICAL_H;
@@ -84,6 +92,16 @@ export class Renderer {
     );
     this.canvas.style.width = `${LOGICAL_W * scale}px`;
     this.canvas.style.height = `${LOGICAL_H * scale}px`;
+  }
+
+  /** Map a logical-canvas pixel to a board cell index, or -1 if outside the 9x9 viewport. */
+  viewportCellAt(state: GameState, lx: number, ly: number): number {
+    if (lx < VPX || lx >= VPX + VIEW_PX || ly < VPY || ly >= VPY + VIEW_PX) return -1;
+    const camX = clamp(tx(state.chip.pos) - (VIEW >> 1), 0, MAP_W - VIEW);
+    const camY = clamp(ty(state.chip.pos) - (VIEW >> 1), 0, MAP_H - VIEW);
+    const col = Math.floor((lx - VPX) / TILE_PX);
+    const row = Math.floor((ly - VPY) / TILE_PX);
+    return (camY + row) * MAP_W + (camX + col);
   }
 
   draw(state: GameState, ui: Ui): void {
@@ -122,7 +140,7 @@ export class Renderer {
       if (ui.openMenu === i) {
         ctx.fillStyle = C_TITLE;
         ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = C_HILITE_TEXT;
       } else {
         ctx.fillStyle = C_DARK;
       }
@@ -202,24 +220,38 @@ export class Renderer {
       wrapText(ctx, state.level.hint, VPX + 6, VPY + VIEW_PX - 40, VIEW_PX - 12, 13);
     }
 
-    // Level-start popup: "LESSON 1 / Password: BDHP" (yellow on black).
+    // Level-start popup: "LESSON 1 / Password: BDHP" in the authentic bitmap font,
+    // yellow on a black field with a red border (matching the original chrome).
     if (ui.levelStart) {
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = 'bold 20px Tahoma, sans-serif';
-      const w1 = ctx.measureText(ui.levelStart.title).width;
-      ctx.font = '13px Tahoma, sans-serif';
-      const w2 = ctx.measureText(`Password: ${ui.levelStart.password}`).width;
-      const bw = Math.max(w1, w2) + 28;
-      const bx = VPX + VIEW_PX / 2 - bw / 2, by2 = VPY + VIEW_PX - 78, bh = 56;
+      const SC = 1;
+      const m = this.font.metrics;
+      const title = ui.levelStart.title;
+      const pw = ui.levelStart.password;
+      const lh = m.cellHeight * SC;
+      const titleW = this.bitmapTextWidth(title, SC);
+      const pwLabel = this.font.passwordYellow;
+      const lineGap = 5;
+      const pwLineW = pwLabel.width + lineGap + this.bitmapTextWidth(pw, SC);
+      const padX = 12, padY = 9, rowGap = 6;
+      const bw = Math.max(titleW, pwLineW) + padX * 2;
+      const bh = lh * 2 + rowGap + padY * 2;
+      const bx = Math.round(VPX + VIEW_PX / 2 - bw / 2);
+      const by = VPY + VIEW_PX - bh - 12;
+      // black field + 2px red border
       ctx.fillStyle = '#000';
-      ctx.fillRect(bx, by2, bw, bh);
-      ctx.fillStyle = '#ffe000';
-      ctx.font = 'bold 20px Tahoma, sans-serif';
-      ctx.fillText(ui.levelStart.title, VPX + VIEW_PX / 2, by2 + 19);
-      ctx.font = '13px Tahoma, sans-serif';
-      ctx.fillText(`Password: ${ui.levelStart.password}`, VPX + VIEW_PX / 2, by2 + 39);
-      ctx.textAlign = 'left';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(bx, by, bw, 2);
+      ctx.fillRect(bx, by + bh - 2, bw, 2);
+      ctx.fillRect(bx, by, 2, bh);
+      ctx.fillRect(bx + bw - 2, by, 2, bh);
+      // title (yellow), centered
+      this.drawBitmapText(title, Math.round(bx + bw / 2 - titleW / 2), by + padY, FONT_YELLOW, SC);
+      // password line: the "Password:" sprite + the code, centered
+      const lineY = by + padY + lh + rowGap;
+      const lineX = Math.round(bx + bw / 2 - pwLineW / 2);
+      ctx.drawImage(pwLabel, lineX, Math.round(lineY + (lh - pwLabel.height) / 2));
+      this.drawBitmapText(pw, lineX + pwLabel.width + lineGap, lineY, FONT_YELLOW, SC);
     }
   }
 
@@ -231,12 +263,12 @@ export class Renderer {
     bevel(ctx, VPX - 2, VPY - 2, VIEW_PX + 4, VIEW_PX + 4, false, 2);
     ctx.fillStyle = '#000';
     ctx.fillRect(VPX, VPY, VIEW_PX, VIEW_PX);
-    ctx.fillStyle = '#ff0000';
-    ctx.font = 'bold 36px Tahoma, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('PAUSED', VPX + VIEW_PX / 2, VPY + VIEW_PX / 2);
-    ctx.textAlign = 'left';
+    // Authentic red "PAUSED" word, centered and scaled to the viewport.
+    const sprite = this.font.pausedRed;
+    const sc = (VIEW_PX * 0.82) / sprite.width;
+    const dw = Math.round(sprite.width * sc);
+    const dh = Math.round(sprite.height * sc);
+    ctx.drawImage(sprite, Math.round(VPX + (VIEW_PX - dw) / 2), Math.round(VPY + (VIEW_PX - dh) / 2), dw, dh);
   }
 
   // --- info panel ---
@@ -308,55 +340,112 @@ export class Renderer {
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
 
-    // width = widest label (+ check gutter) + widest shortcut + padding
+    // width = gutter + widest label + gap + widest shortcut + right pad
     let labelW = 0, shortW = 0;
     for (const it of items) {
       if (it.separator) continue;
       labelW = Math.max(labelW, ctx.measureText(it.label!).width);
       if (it.shortcut) shortW = Math.max(shortW, ctx.measureText(it.shortcut).width);
     }
-    const padL = 20, gap = 24, padR = 12;
-    const w = padL + labelW + gap + shortW + padR;
-    const rowH = 16;
-    let y = bar.y + bar.h;
+    const w = DROP_GUTTER + labelW + DROP_GAP + shortW + DROP_PAD_R;
     const x = bar.x;
+    let y = bar.y + bar.h;
     let h = 0;
-    for (const it of items) h += it.separator ? 6 : rowH;
+    for (const it of items) h += it.separator ? DROP_SEP_H : DROP_ROW_H;
 
-    // shadow + box
+    // drop shadow, then a gray Win95 panel with a raised bevel (no white fill / black outline)
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fillRect(x + 2, y + 2, w, h + 2);
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = C_FACE;
     ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = C_DARK;
-    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    bevelWin95(ctx, x, y, w, h);
 
     ui.dropItemRects = [];
     items.forEach((it, i) => {
       if (it.separator) {
-        ui.dropItemRects.push({ x, y, w, h: 6 });
-        ctx.strokeStyle = C_SHADOW;
-        ctx.beginPath(); ctx.moveTo(x + 3, y + 3.5); ctx.lineTo(x + w - 3, y + 3.5); ctx.stroke();
-        ctx.strokeStyle = C_LIGHT;
-        ctx.beginPath(); ctx.moveTo(x + 3, y + 4.5); ctx.lineTo(x + w - 3, y + 4.5); ctx.stroke();
-        y += 6;
+        ui.dropItemRects.push({ x, y, w, h: DROP_SEP_H });
+        // etched groove: a gray line with a white line just below, inset from the edges
+        ctx.fillStyle = C_SHADOW;
+        ctx.fillRect(x + 5, y + 3, w - 10, 1);
+        ctx.fillStyle = C_LIGHT;
+        ctx.fillRect(x + 5, y + 4, w - 10, 1);
+        y += DROP_SEP_H;
         return;
       }
-      const r = { x, y, w, h: rowH };
+      const r = { x, y, w, h: DROP_ROW_H };
       ui.dropItemRects.push(r);
       const disabled = it.enabled === false;
       const sel = ui.hoverItem === i && !disabled;
-      if (sel) { ctx.fillStyle = C_TITLE; ctx.fillRect(x, y, w, rowH); }
-      ctx.fillStyle = disabled ? C_GRAY_TEXT : sel ? '#fff' : C_DARK;
-      if (it.checked) ctx.fillText('✓', x + 6, y + rowH / 2 + 1);
-      this.menuText(it.label!, x + padL, y + rowH / 2 + 1, it.accel);
-      if (it.shortcut) {
-        ctx.textAlign = 'right';
-        ctx.fillText(it.shortcut, x + w - padR, y + rowH / 2 + 1);
-        ctx.textAlign = 'left';
+      const ty2 = y + DROP_ROW_H / 2 + 1;
+      if (sel) {
+        ctx.fillStyle = C_TITLE; // navy interior, leaving the 2px bevel visible
+        ctx.fillRect(x + 2, y, w - 4, DROP_ROW_H);
       }
-      y += rowH;
+      if (disabled) {
+        if (it.checked) this.embossGlyph('✓', x + 6, ty2);
+        this.embossText(it.label!, x + DROP_GUTTER, ty2, it.accel);
+        if (it.shortcut) {
+          ctx.textAlign = 'right';
+          this.embossText(it.shortcut, x + w - DROP_PAD_R, ty2, undefined);
+          ctx.textAlign = 'left';
+        }
+      } else {
+        ctx.fillStyle = sel ? C_HILITE_TEXT : C_DARK;
+        if (it.checked) ctx.fillText('✓', x + 6, ty2);
+        this.menuText(it.label!, x + DROP_GUTTER, ty2, it.accel);
+        if (it.shortcut) {
+          ctx.textAlign = 'right';
+          ctx.fillText(it.shortcut, x + w - DROP_PAD_R, ty2);
+          ctx.textAlign = 'left';
+        }
+      }
+      y += DROP_ROW_H;
     });
+  }
+
+  /** Win95 disabled text: a white highlight 1px down-right, then the gray face. */
+  private embossText(label: string, x: number, y: number, accel: number | undefined): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = C_LIGHT;
+    this.menuText(label, x + 1, y + 1, accel);
+    ctx.fillStyle = C_GRAY_TEXT;
+    this.menuText(label, x, y, accel);
+  }
+
+  /** Embossed single glyph (the checkmark) for disabled rows. */
+  private embossGlyph(glyph: string, x: number, y: number): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = C_LIGHT;
+    ctx.fillText(glyph, x + 1, y + 1);
+    ctx.fillStyle = C_GRAY_TEXT;
+    ctx.fillText(glyph, x, y);
+  }
+
+  // --- bitmap font (authentic in-game text) ---
+
+  /** Advance width of `text` in the bitmap font at `scale` (logical px). */
+  private bitmapTextWidth(text: string, scale: number): number {
+    const m = this.font.metrics;
+    let w = 0;
+    for (const raw of text.toUpperCase()) {
+      const g = m.glyphs[raw] ?? m.glyphs[' ']!;
+      w += (g.w + m.gap) * scale;
+    }
+    return Math.max(0, w - m.gap * scale);
+  }
+
+  /** Draw `text` in the authentic bitmap font. `color` is a pre-tinted key. */
+  private drawBitmapText(text: string, x: number, y: number, color: string, scale = 1): void {
+    const m = this.font.metrics;
+    const sheet = this.font.tinted.get(color) ?? this.font.tinted.get(FONT_WHITE)!;
+    let cx = x;
+    for (const raw of text.toUpperCase()) {
+      const g = m.glyphs[raw] ?? m.glyphs[' ']!;
+      if (raw !== ' ' && g.w > 0) {
+        this.ctx.drawImage(sheet, g.x, g.y, g.w, g.h, Math.round(cx), Math.round(y), g.w * scale, g.h * scale);
+      }
+      cx += (g.w + m.gap) * scale;
+    }
   }
 
   private drawDialog(ui: Ui): void {
@@ -458,6 +547,19 @@ function bevel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.fillStyle = br;
   ctx.fillRect(x, y + h - t, w, t); // bottom
   ctx.fillRect(x + w - t, y, t, h); // right
+}
+
+/** Win95 "outset" border: 1px white top/left, 1px black bottom/right, 1px gray just inside BR. */
+function bevelWin95(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  ctx.fillStyle = C_LIGHT; // white top + left
+  ctx.fillRect(x, y, w, 1);
+  ctx.fillRect(x, y, 1, h);
+  ctx.fillStyle = C_DARK; // black bottom + right
+  ctx.fillRect(x, y + h - 1, w, 1);
+  ctx.fillRect(x + w - 1, y, 1, h);
+  ctx.fillStyle = C_SHADOW; // gray inner bottom + right
+  ctx.fillRect(x + 1, y + h - 2, w - 2, 1);
+  ctx.fillRect(x + w - 2, y + 1, 1, h - 2);
 }
 
 function drawBevelButton(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {

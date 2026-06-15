@@ -78,6 +78,8 @@ export interface GameState {
   stepping: number;
   /** Last forced-slide direction Chip experienced (for teleport-onto-block). */
   lastSlipDir: Direction | null;
+  /** MS mouse-walk goal cell (packed idx), or -1 when none. */
+  mouseGoal: number;
   /** Whole seconds left; -1 when untimed. */
   timeLeft: number;
   sounds: string[];
@@ -184,6 +186,7 @@ export function initState(level: Level, seed?: number): GameState {
     currentTime: 0,
     stepping: 0,
     lastSlipDir: null,
+    mouseGoal: -1,
     timeLeft: level.timeLimit > 0 ? level.timeLimit : -1,
     sounds: [],
   };
