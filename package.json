@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "extract-assets": "node tools/extract-assets.mjs",
+    "gen-music": "node tools/gen-music.mjs",
     "deploy": "npm run build && npx wrangler pages deploy dist"
   },
   "devDependencies": {

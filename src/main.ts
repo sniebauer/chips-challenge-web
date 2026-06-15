@@ -10,6 +10,7 @@ import { Renderer } from './render/renderer';
 import { Keyboard } from './input/keyboard';
 import { Touch } from './input/touch';
 import { Audio } from './audio/sfx';
+import { Music } from './audio/music';
 import { loadSave, writeSave, recordWin, type SaveData } from './ui/save';
 import { Shell } from './ui/shell';
 
@@ -32,6 +33,7 @@ class Game {
     private keyboard: Keyboard,
     private touch: Touch,
     private audio: Audio,
+    private music: Music,
   ) {
     this.save = loadSave();
     // Load the furthest unlocked level so it shows behind the title overlay.
@@ -42,6 +44,7 @@ class Game {
   private loadLevel(index: number): void {
     this.levelIndex = Math.max(0, Math.min(index, this.set.levels.length - 1));
     this.state = initState(this.set.levels[this.levelIndex]!);
+    this.music.setLevel(this.state.level.number);
     this.phase = 'playing';
     this.acc = 0;
   }
@@ -139,15 +142,25 @@ async function main(): Promise<void> {
   const keyboard = new Keyboard();
   keyboard.attach();
   const audio = new Audio();
-  const unlock = () => void audio.unlock();
+  const music = new Music();
+  const unlock = () => {
+    void audio.unlock();
+    music.start();
+  };
   window.addEventListener('keydown', unlock, { once: true });
   window.addEventListener('pointerdown', unlock, { once: true });
+  // M toggles mute for sound + music.
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyM' && !(e.target instanceof HTMLInputElement)) {
+      audio.muted = music.toggleMute();
+    }
+  });
 
   const fit = () => renderer.fit(app);
   fit();
   window.addEventListener('resize', fit);
 
-  const game = new Game(set, renderer, keyboard, touch, audio);
+  const game = new Game(set, renderer, keyboard, touch, audio, music);
   (window as unknown as { __game: Game }).__game = game;
   const shell = new Shell({
     onStart: () => game.resume(),

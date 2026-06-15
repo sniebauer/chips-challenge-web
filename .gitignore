@@ -3,3 +3,4 @@ dist/
 .src_game/
 *.log
 .DS_Store
+tools/soundfonts/
