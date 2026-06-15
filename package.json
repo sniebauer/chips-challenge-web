@@ -1,0 +1,22 @@
+{
+  "name": "chips-challenge-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pixel-perfect browser port of the Windows (MS) version of Chip's Challenge.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "extract-assets": "node tools/extract-assets.mjs",
+    "deploy": "npm run build && npx wrangler pages deploy dist"
+  },
+  "devDependencies": {
+    "pngjs": "^7.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}

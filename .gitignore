@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.src_game/
+*.log
+.DS_Store
