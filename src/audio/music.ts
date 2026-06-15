@@ -34,8 +34,14 @@ export class Music {
 
   toggleMute(): boolean {
     this.muted = !this.muted;
-    if (this.muted) this.el.pause();
-    else if (this.started) this.el.play().catch(() => {});
+    if (this.muted) {
+      this.el.pause();
+    } else if (this.started) {
+      // If the game started muted, no track was ever loaded — load + play one
+      // now; otherwise just resume the already-loaded track.
+      if (!this.el.src) this.play(this.idx);
+      else this.el.play().catch(() => {});
+    }
     return this.muted;
   }
 

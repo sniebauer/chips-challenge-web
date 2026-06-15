@@ -73,6 +73,10 @@ export class Renderer {
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private bgPattern: CanvasPattern | null = null;
+  // Backing-store -> logical scale (device pixels per logical pixel). The canvas
+  // is rendered at display resolution so text stays crisp at any size.
+  private sx = 1;
+  private sy = 1;
 
   constructor(private atlas: Atlas, private chrome: Chrome, private font: BitmapFont) {
     this.canvas = document.createElement('canvas');
@@ -86,12 +90,25 @@ export class Renderer {
   }
 
   fit(container: HTMLElement): void {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    // Fractional scale to fill the container while preserving aspect ratio.
     const scale = Math.max(
       1,
-      Math.floor(Math.min(container.clientWidth / LOGICAL_W, container.clientHeight / LOGICAL_H)),
+      Math.min(container.clientWidth / LOGICAL_W, container.clientHeight / LOGICAL_H),
     );
-    this.canvas.style.width = `${LOGICAL_W * scale}px`;
-    this.canvas.style.height = `${LOGICAL_H * scale}px`;
+    this.canvas.style.width = `${Math.round(LOGICAL_W * scale)}px`;
+    this.canvas.style.height = `${Math.round(LOGICAL_H * scale)}px`;
+    // Render the backing store at device resolution so canvas text stays crisp at
+    // any size; sprites are nearest-neighbor scaled, only vector text antialiases.
+    const bw = Math.max(LOGICAL_W, Math.round(LOGICAL_W * scale * dpr));
+    const bh = Math.max(LOGICAL_H, Math.round(LOGICAL_H * scale * dpr));
+    if (this.canvas.width !== bw || this.canvas.height !== bh) {
+      this.canvas.width = bw;
+      this.canvas.height = bh;
+      this.ctx.imageSmoothingEnabled = false; // resizing the canvas resets ctx state
+    }
+    this.sx = bw / LOGICAL_W;
+    this.sy = bh / LOGICAL_H;
   }
 
   /** Map a logical-canvas pixel to a board cell index, or -1 if outside the 9x9 viewport. */
@@ -105,6 +122,9 @@ export class Renderer {
   }
 
   draw(state: GameState, ui: Ui): void {
+    // Map logical coordinates onto the device-resolution backing store.
+    this.ctx.setTransform(this.sx, 0, 0, this.sy, 0, 0);
+    this.ctx.imageSmoothingEnabled = false;
     this.drawWindowFrame(ui);
     this.drawClient(state);
     if (ui.isPausedView()) this.drawPausedViewport();

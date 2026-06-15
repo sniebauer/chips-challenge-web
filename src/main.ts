@@ -238,6 +238,10 @@ async function main(): Promise<void> {
     return { x: ((e.clientX - r.left) / r.width) * LOGICAL_W, y: ((e.clientY - r.top) / r.height) * LOGICAL_H };
   };
   renderer.canvas.addEventListener('pointerdown', (e) => {
+    // Grab keyboard focus. When embedded in the desktop shell (an iframe), a
+    // click on the non-focusable canvas otherwise leaves keyboard focus with the
+    // parent, so starting with the mouse would make the keyboard appear dead.
+    window.focus();
     const { x, y } = toLogical(e);
     if (ui.pointerDown(x, y)) { e.preventDefault(); return; }
     // Mouse-walk: a left click on the live board sets a goal Chip walks toward.
