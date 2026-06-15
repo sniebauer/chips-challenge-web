@@ -110,6 +110,27 @@ for (const band of ROW_BANDS) {
   });
 }
 
+// Punctuation used by CHIPS.DAT level titles: '.' (I.C. YOU / "Thanks to...")
+// and '?' (STRIPES?). The full symbols row segments ambiguously (multi-part
+// glyphs like " and =), so take just these two by explicit, shape-verified
+// boxes from the symbols band below the digits (period = lone baseline dot at
+// x[409,411]; question mark = the rightmost glyph at x[431,441]).
+{
+  const SY0 = 400, SY1 = 421;
+  const symBoxes = [
+    { ch: '.', x0: 409, x1: 411 },
+    { ch: '?', x0: 431, x1: 441 },
+  ];
+  // Shared baseline = the lowest ink among these (both rest on the text baseline).
+  let symBaseline = SY0;
+  for (const s of symBoxes) { const [, bot] = vExtent(isYellow, s.x0, s.x1, SY0, SY1); if (bot > symBaseline) symBaseline = bot; }
+  for (const s of symBoxes) {
+    const [top, bot] = vExtent(isYellow, s.x0, s.x1, SY0, SY1);
+    maxAscent = Math.max(maxAscent, symBaseline - top + 1);
+    glyphs.push({ ch: s.ch, x0: s.x0, x1: s.x1, top, bot, bandBaseline: symBaseline });
+  }
+}
+
 // One shared cell: height = tallest glyph; every glyph bottom-aligned to baseline.
 const CELL_H = maxAscent;       // e.g. 16
 const GAP = 1;                  // 1px transparent gap between packed glyphs
