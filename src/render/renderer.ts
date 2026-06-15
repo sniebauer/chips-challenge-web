@@ -12,10 +12,11 @@ import type { Ui } from '../ui/desktop';
 export const VIEW = 9;
 const VIEW_PX = VIEW * TILE_PX; // 288
 const BORDER = 3;
-const TITLE_H = 18;
 const MENU_H = 18;
 const CLIENT_X = BORDER;
-const CLIENT_Y = BORDER + TITLE_H + MENU_H; // 39
+// The OS title bar is owned by the host shell (the game is embedded in a Win95
+// window); the menu bar sits directly under the thin outer border.
+const CLIENT_Y = BORDER + MENU_H; // 21
 const MARGIN = 26;
 const FRAME = 6; // viewport bevel thickness
 const GAP = 13;
@@ -86,7 +87,7 @@ export class Renderer {
   }
 
   draw(state: GameState, ui: Ui): void {
-    this.drawWindowFrame(state, ui);
+    this.drawWindowFrame(ui);
     this.drawClient(state);
     if (ui.isPausedView()) this.drawPausedViewport();
     else this.drawViewport(state, ui);
@@ -97,40 +98,15 @@ export class Renderer {
 
   // --- window chrome ---
 
-  private drawWindowFrame(state: GameState, ui: Ui): void {
+  private drawWindowFrame(ui: Ui): void {
     const ctx = this.ctx;
     // Outer raised bevel + face.
     ctx.fillStyle = C_FACE;
     ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
     bevel(ctx, 0, 0, LOGICAL_W, LOGICAL_H, true, 2);
 
-    // Title bar.
-    ctx.fillStyle = C_TITLE;
-    ctx.fillRect(BORDER, BORDER, LOGICAL_W - 2 * BORDER, TITLE_H);
-    // control-menu box (left)
-    drawBevelButton(ctx, BORDER + 1, BORDER + 1, TITLE_H - 2, TITLE_H - 2);
-    ctx.fillStyle = C_DARK;
-    ctx.fillRect(BORDER + 4, BORDER + TITLE_H / 2 - 1, TITLE_H - 8, 3);
-    // min / max buttons (right)
-    const by = BORDER + 1, bs = TITLE_H - 2;
-    const maxX = LOGICAL_W - BORDER - bs - 1;
-    const minX = maxX - bs - 1;
-    drawBevelButton(ctx, minX, by, bs, bs);
-    drawBevelButton(ctx, maxX, by, bs, bs);
-    ctx.fillStyle = C_DARK;
-    ctx.fillRect(minX + 4, by + bs - 6, bs - 8, 2); // down arrow bar
-    ctx.strokeStyle = C_DARK;
-    ctx.strokeRect(maxX + 3.5, by + 3.5, bs - 7, bs - 8); // up box
-    ctx.fillRect(maxX + 3, by + 3, bs - 6, 2);
-    // title text
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 11px Tahoma, "MS Sans Serif", sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Chip's Challenge: ${state.level.title}`, BORDER + TITLE_H + 4, BORDER + TITLE_H / 2 + 1);
-
-    // Menu bar.
-    const my = BORDER + TITLE_H;
+    // Menu bar (directly under the outer border; the OS title bar is the host's).
+    const my = BORDER;
     ctx.fillStyle = C_FACE;
     ctx.fillRect(BORDER, my, LOGICAL_W - 2 * BORDER, MENU_H);
     ctx.font = MENU_FONT;

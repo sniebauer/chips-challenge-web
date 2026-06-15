@@ -14,6 +14,7 @@ import { Music } from './audio/music';
 import { loadSave, writeSave, recordWin, type SaveData } from './ui/save';
 import { Ui } from './ui/desktop';
 import { HelpWindow } from './ui/help';
+import { reportTitle, reportReady } from './embed';
 
 const TICK_MS = 1000 / msRuleset.ticksPerSecond;
 
@@ -54,6 +55,7 @@ class Game {
     this.levelIndex = Math.max(0, Math.min(index, this.set.levels.length - 1));
     this.state = initState(this.set.levels[this.levelIndex]!);
     this.music.setLevel(this.state.level.number);
+    reportTitle(this.state.level.title);
     this.paused = false;
     this.winAt = 0;
     this.acc = 0;
@@ -245,6 +247,7 @@ async function main(): Promise<void> {
   fit();
   window.addEventListener('resize', fit);
 
+  reportReady();
   game.start();
 }
 
