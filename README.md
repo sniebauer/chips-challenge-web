@@ -13,14 +13,17 @@ of the MS game engine in TypeScript that runs the original level data (`CHIPS.DA
 - **Stack:** vanilla TypeScript + HTML5 Canvas, built with Vite, shipped as static
   files. The production bundle is ~10 kB gzipped.
 - **Presentation:** the full original Windows 3.1 window is reproduced — blue title
-  bar, Game/Options/Level/Help menu, green circuit-board background, the beveled 9x9
-  viewport, and the INFOWND info panel with green 7-segment LCD displays and the
-  inventory grid (all art extracted from `CHIPS.EXE`).
+  bar, green circuit-board background, the beveled 9x9 viewport, and the INFOWND info
+  panel with green 7-segment LCD displays and the inventory grid (all art extracted
+  from `CHIPS.EXE`). The **menus work** (Game / Options / Level / Help) with the
+  level-start password popup, a Go To Level dialog for entering codes, Pause, and
+  Win3.1 message boxes — all drawn on the canvas (`src/ui/desktop.ts`).
 - **Audio:** original WAV sound effects, plus the original MIDI music pre-rendered to
   looping OGG/MP3 at build time (see below).
-- **Controls:** Arrow keys / WASD, on-screen d-pad + swipe on touch, `R` to restart,
-  `P` to enter a level password, `M` to mute. Progress (furthest level, best times)
-  is saved to `localStorage`.
+- **Controls:** Arrow keys / WASD (one press = one tile, typematic auto-repeat on
+  hold), on-screen d-pad + swipe on touch. Menu shortcuts: `F2` new game, `F3` pause,
+  `Ctrl+R/N/P` restart/next/previous, `Level > Go To...` to enter a code. Progress
+  (furthest level, best times) is saved to `localStorage`.
 
 ## Assets / legal note
 
