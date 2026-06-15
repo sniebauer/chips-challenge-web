@@ -85,28 +85,13 @@ for (let y = 0; y < height; y++) {
 writeFileSync(join(OUT, 'tiles.png'), PNG.sync.write(atlas));
 console.log(`  wrote assets/tiles.png (${width}x${height}, ${width / 32}x${height / 32} tiles)`);
 
-// Favicon: Chip (facing south) composited over a floor tile. Code 0x6E overlay
-// lives at code 0x6E+0x30=0x9E => col 9, row 14.
+// Favicon: the game's own Windows program icon (RT_GROUP_ICON in CHIPS.EXE).
 {
-  const fav = new PNG({ width: TILE, height: TILE });
-  const floorCol = 0, floorRow = 0; // FLOOR
-  const chipCol = 9, chipRow = 14;
-  for (let y = 0; y < TILE; y++) {
-    for (let x = 0; x < TILE; x++) {
-      const di = (y * TILE + x) * 4;
-      const fi = ((floorRow * TILE + y) * width + (floorCol * TILE + x)) * 4;
-      const ci = ((chipRow * TILE + y) * width + (chipCol * TILE + x)) * 4;
-      const a = atlas.data[ci + 3];
-      const src = a ? ci : fi;
-      fav.data[di] = atlas.data[src];
-      fav.data[di + 1] = atlas.data[src + 1];
-      fav.data[di + 2] = atlas.data[src + 2];
-      fav.data[di + 3] = 255;
-    }
-  }
   ensure(join(ROOT, 'public'));
-  writeFileSync(join(ROOT, 'public', 'favicon.png'), PNG.sync.write(fav));
-  console.log('  wrote public/favicon.png');
+  const ico = join(TMP, 'chips.ico');
+  sh('wrestool', ['-x', '--type=14', exe, '-o', ico]); // assemble the icon group into a .ico
+  sh('icotool', ['-x', ico, '-o', join(ROOT, 'public', 'favicon.png')]); // 32x32 -> PNG
+  console.log('  wrote public/favicon.png (original program icon)');
 }
 
 // --- 1b. Window chrome: info panel, green background, LCD digit font ---
