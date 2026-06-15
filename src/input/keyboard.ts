@@ -30,8 +30,13 @@ export class Keyboard {
     if (d === undefined) return;
     e.preventDefault();
     if (!this.held.includes(d)) this.held.push(d);
-    this.pending = d;
-    this.pendingTtl = 5; // hold a tap long enough to reach Chip's next move window
+    // Only arm the tap buffer on the initial press. OS key-repeat events would
+    // otherwise keep re-arming it, leaving a stray buffered move that fires once
+    // more after the key is released.
+    if (!e.repeat) {
+      this.pending = d;
+      this.pendingTtl = 5; // hold a tap long enough to reach Chip's next move window
+    }
   };
 
   private onKeyUp = (e: KeyboardEvent): void => {
