@@ -41,7 +41,7 @@ const C_DARK = '#000000';
 const C_TITLE = '#000080';
 const C_GRAY_TEXT = '#808080';
 const C_HILITE_TEXT = '#ffffff'; // selected menu text (Win95)
-const MENU_FONT = '11px Tahoma, "MS Sans Serif", sans-serif';
+const MENU_FONT = '12px W95FA, Tahoma, "MS Sans Serif", sans-serif';
 
 // Win95 dropdown metrics.
 const DROP_ROW_H = 18;
@@ -214,7 +214,7 @@ export class Renderer {
       ctx.fillStyle = 'rgba(0,0,0,0.78)';
       ctx.fillRect(VPX, VPY + VIEW_PX - 44, VIEW_PX, 44);
       ctx.fillStyle = '#ffe070';
-      ctx.font = '11px Tahoma, sans-serif';
+      ctx.font = '11px W95FA, Tahoma, sans-serif';
       ctx.textBaseline = 'top';
       ctx.textAlign = 'left';
       wrapText(ctx, state.level.hint, VPX + 6, VPY + VIEW_PX - 40, VIEW_PX - 12, 13);
@@ -237,14 +237,16 @@ export class Renderer {
       const bh = lh * 2 + rowGap + padY * 2;
       const bx = Math.round(VPX + VIEW_PX / 2 - bw / 2);
       const by = VPY + VIEW_PX - bh - 12;
-      // black field + 2px red border
+      // black field with a raised 3D bevel: white highlight on top/left, gray
+      // shadow on bottom/right (matches the original — no red border).
       ctx.fillStyle = '#000';
       ctx.fillRect(bx, by, bw, bh);
-      ctx.fillStyle = '#ff0000';
-      ctx.fillRect(bx, by, bw, 2);
-      ctx.fillRect(bx, by + bh - 2, bw, 2);
-      ctx.fillRect(bx, by, 2, bh);
-      ctx.fillRect(bx + bw - 2, by, 2, bh);
+      ctx.fillStyle = C_LIGHT; // #ffffff
+      ctx.fillRect(bx, by, bw, 1); // top
+      ctx.fillRect(bx, by, 1, bh); // left
+      ctx.fillStyle = C_SHADOW; // #808080
+      ctx.fillRect(bx, by + bh - 2, bw, 2); // bottom
+      ctx.fillRect(bx + bw - 2, by, 2, bh); // right
       // title (yellow), centered
       this.drawBitmapText(title, Math.round(bx + bw / 2 - titleW / 2), by + padY, FONT_YELLOW, SC);
       // password line: the "Password:" sprite + the code, centered
@@ -465,13 +467,13 @@ export class Renderer {
     drawBevelButton(ctx, x + 4, y + 4, 14, 14);
     ctx.fillStyle = C_DARK; ctx.fillRect(x + 7, y + 10, 8, 2);
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 11px Tahoma, sans-serif';
+    ctx.font = 'bold 11px W95FA, Tahoma, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(d.title, x + w / 2, y + 11);
 
     ctx.textAlign = 'left';
     ctx.fillStyle = C_DARK;
-    ctx.font = '12px Tahoma, sans-serif';
+    ctx.font = '12px W95FA, Tahoma, sans-serif';
     ui.dialogButtons = [];
     ui.dialogFieldRects = [];
 
@@ -507,7 +509,7 @@ export class Renderer {
     const ctx = this.ctx;
     ctx.fillStyle = C_DARK;
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.font = '12px Tahoma, sans-serif';
+    ctx.font = '12px W95FA, Tahoma, sans-serif';
     ctx.fillText(label, x, y + 7);
     const fw = 72, fh = 16;
     ctx.fillStyle = '#fff'; ctx.fillRect(fieldX, y, fw, fh);
@@ -523,7 +525,7 @@ export class Renderer {
     ctx.fillStyle = C_FACE; ctx.fillRect(x, y, w, h);
     bevel(ctx, x, y, w, h, true, 2);
     ctx.fillStyle = C_DARK;
-    ctx.font = 'bold 11px Tahoma, sans-serif';
+    ctx.font = 'bold 11px W95FA, Tahoma, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(label, x + w / 2, y + h / 2 + 1);
     ctx.textAlign = 'left';

@@ -11,6 +11,7 @@ import fontUrl from '../../assets/fonts/font.png';
 import pausedUrl from '../../assets/fonts/paused.png';
 import passwordUrl from '../../assets/fonts/password.png';
 import fontMetrics from '../../assets/fonts/font.json';
+import w95faUrl from '../../assets/fonts/w95fa.woff2';
 
 export const TILE_PX = 32;
 export const ATLAS_COLS = 13;
@@ -85,6 +86,22 @@ function tintMask(src: CanvasImageSource, w: number, h: number, color: string): 
   g.fillStyle = color;
   g.fillRect(0, 0, w, h);
   return c;
+}
+
+/**
+ * Load the W95FA UI font (a Win95 system-font re-creation, SIL OFL) into the
+ * document so the canvas menus/dialogs can draw with it. Resolves even if the
+ * font fails (the renderer's font stacks fall back to Tahoma).
+ */
+export async function loadUiFont(): Promise<void> {
+  try {
+    if (typeof FontFace === 'undefined') return;
+    const face = new FontFace('W95FA', `url(${w95faUrl})`);
+    await face.load();
+    document.fonts.add(face);
+  } catch {
+    // fall back to Tahoma
+  }
 }
 
 export async function loadFont(): Promise<BitmapFont> {

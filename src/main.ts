@@ -5,7 +5,7 @@ import datUrl from '../assets/levels/CHIPS.DAT?url';
 import { parseDat, type LevelSet } from './engine/dat';
 import { initState, type GameState } from './engine/state';
 import { msRuleset } from './engine/logic-ms';
-import { loadAtlas, loadChrome, loadFont } from './render/atlas';
+import { loadAtlas, loadChrome, loadFont, loadUiFont } from './render/atlas';
 import { Renderer, LOGICAL_W, LOGICAL_H } from './render/renderer';
 import { Keyboard } from './input/keyboard';
 import { Touch } from './input/touch';
@@ -177,10 +177,11 @@ class Game {
 
 async function main(): Promise<void> {
   const app = document.getElementById('app')!;
-  const [atlas, chrome, font, datBuf] = await Promise.all([
+  const [atlas, chrome, font, , datBuf] = await Promise.all([
     loadAtlas(),
     loadChrome(),
     loadFont(),
+    loadUiFont(),
     fetch(datUrl).then((r) => r.arrayBuffer()),
   ]);
   const set = parseDat(new Uint8Array(datBuf));

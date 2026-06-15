@@ -57,7 +57,10 @@ console.log('  copied source.png');
 // --- 1. Bitmap font: segment the yellow block into per-glyph boxes ---
 // Yellow font block lives at x[175,345]. Four rows (top,bottom inclusive),
 // derived from the sheet's blank scanlines:
-const YELLOW_X0 = 175, YELLOW_X1 = 345;
+// X1 must clear the LAST glyph of the widest row: the A-N row's "N" ink reaches
+// x=351 and O-Z's "Z" reaches 349, so 345 used to clip them (N became a 6px
+// sliver). 360 leaves margin without reaching the (white) font block further right.
+const YELLOW_X0 = 175, YELLOW_X1 = 360;
 const ROW_BANDS = [
   { y0: 353, y1: 367, chars: 'ABCDEFGHIJKLMN'.split('') }, // uppercase A-N
   { y0: 369, y1: 384, chars: 'OPQRSTUVWXYZ'.split('') },   // uppercase O-Z
