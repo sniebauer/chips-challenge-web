@@ -1,39 +1,52 @@
-// Touch input for mobile. Movement is tap-to-walk: tapping a tile sets a
-// mouse-walk goal (handled by the canvas pointer handler in main.ts, same as a
-// mouse click), so there is no on-screen d-pad. A swipe still gives a quick
-// one-tile nudge in its direction.
+// Touch input for mobile: an on-screen d-pad (arrow buttons) rendered below the
+// game. Holding a button keeps that direction active (re-attempted each turn).
+// Movement is via the d-pad — tap-to-walk is disabled on touch devices (main.ts).
 
 import { Dir, type Direction } from '../engine/tiles';
 
 export class Touch {
   private active: Direction | null = null;
+  readonly element: HTMLElement;
 
   constructor() {
-    this.attachSwipe();
+    this.element = this.buildDpad();
   }
 
   current(): Direction | null {
     return this.active;
   }
 
-  private attachSwipe(): void {
-    let sx = 0, sy = 0, tracking = false;
-    window.addEventListener('touchstart', (e) => {
-      const t = e.touches[0];
-      if (!t) return;
-      sx = t.clientX; sy = t.clientY; tracking = true;
-    }, { passive: true });
-    window.addEventListener('touchend', (e) => {
-      if (!tracking) return;
-      tracking = false;
-      const t = e.changedTouches[0];
-      if (!t) return;
-      const dx = t.clientX - sx, dy = t.clientY - sy;
-      if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return; // a tap -> handled as tap-to-walk
-      const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? Dir.E : Dir.W) : (dy > 0 ? Dir.S : Dir.N);
-      // A swipe gives a single-turn nudge.
-      this.active = dir;
-      setTimeout(() => { if (this.active === dir) this.active = null; }, 120);
-    }, { passive: true });
+  private buildDpad(): HTMLElement {
+    // Fills the area beneath the canvas and centers a 3x3 arrow cross.
+    const wrap = document.createElement('div');
+    wrap.style.cssText =
+      'flex:1 1 auto;width:100%;box-sizing:border-box;padding:16px;' +
+      'display:grid;place-content:center;gap:10px;' +
+      'grid-template-columns:repeat(3,76px);grid-template-rows:repeat(3,76px);' +
+      'touch-action:none;user-select:none;';
+    const cells: [number, number, Direction, string][] = [
+      [2, 1, Dir.N, '▲'], [1, 2, Dir.W, '◀'], [3, 2, Dir.E, '▶'], [2, 3, Dir.S, '▼'],
+    ];
+    const FACE = '#c0c0c0', DOWN = '#9a9a9a';
+    for (const [col, row, dir, glyph] of cells) {
+      const b = document.createElement('button');
+      b.textContent = glyph;
+      b.style.cssText =
+        `grid-column:${col};grid-row:${row};font-size:34px;border-radius:10px;` +
+        'border:3px solid;border-color:#fff #808080 #808080 #fff;color:#000;' +
+        `background:${FACE};display:flex;align-items:center;justify-content:center;` +
+        'touch-action:none;cursor:pointer;line-height:1;';
+      const set = (d: Direction | null) => (e: Event) => {
+        e.preventDefault();
+        this.active = d;
+        b.style.background = d === null ? FACE : DOWN;
+      };
+      b.addEventListener('pointerdown', set(dir));
+      b.addEventListener('pointerup', set(null));
+      b.addEventListener('pointerleave', set(null));
+      b.addEventListener('pointercancel', set(null));
+      wrap.appendChild(b);
+    }
+    return wrap;
   }
 }

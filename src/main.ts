@@ -188,7 +188,16 @@ async function main(): Promise<void> {
 
   const renderer = new Renderer(atlas, chrome, font);
   app.appendChild(renderer.canvas);
+
+  // On touch devices: stack the game at the top and an on-screen d-pad below it
+  // (movement is the d-pad, not tap-to-walk). On desktop the canvas stays centered.
   const touch = new Touch();
+  const isTouch = matchMedia('(pointer: coarse)').matches;
+  if (isTouch) {
+    app.style.flexDirection = 'column';
+    app.style.justifyContent = 'flex-start';
+    app.appendChild(touch.element);
+  }
 
   const keyboard = new Keyboard();
   const audio = new Audio();
@@ -245,7 +254,8 @@ async function main(): Promise<void> {
     const { x, y } = toLogical(e);
     if (ui.pointerDown(x, y)) { e.preventDefault(); return; }
     // Mouse-walk: a left click on the live board sets a goal Chip walks toward.
-    if (e.button !== 0) return;
+    // Disabled on touch devices, which move with the d-pad instead.
+    if (isTouch || e.button !== 0) return;
     if (game.paused || ui.openMenu !== null || ui.blocking || help.isOpen()) return;
     if (game.state.status !== 'playing') return;
     const cell = renderer.viewportCellAt(game.state, x, y);

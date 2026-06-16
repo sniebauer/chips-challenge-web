@@ -91,9 +91,10 @@ export class Renderer {
 
   fit(container: HTMLElement): void {
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    // Fractional scale to fill the container while preserving aspect ratio.
+    // Fractional scale to fit the container, preserving aspect ratio. May be < 1
+    // so the game shrinks to fit small (mobile) screens instead of overflowing.
     const scale = Math.max(
-      1,
+      0.1,
       Math.min(container.clientWidth / LOGICAL_W, container.clientHeight / LOGICAL_H),
     );
     this.canvas.style.width = `${Math.round(LOGICAL_W * scale)}px`;
